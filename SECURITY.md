@@ -1,6 +1,6 @@
 # Security Policy
 
-Security is our top priority. FlowGuard handles critical compliance-grade orchestration and automation reliability. We take all vulnerabilities with the utmost seriousness.
+Security is our top priority. VyapaarAI handles critical operations, customer records, and billing transactions. We take all vulnerabilities with the utmost seriousness.
 
 ## Supported Versions
 
@@ -15,8 +15,8 @@ Security is our top priority. FlowGuard handles critical compliance-grade orches
 
 **NEVER open public GitHub issues for vulnerabilities.**
 
-If you discover a security vulnerability within FlowGuard, please send an email to:
-**[security@flowguard.dev](mailto:security@flowguard.dev)**
+If you discover a security vulnerability within VyapaarAI, please send an email to:
+**[security@vyapaarai.com](mailto:security@vyapaarai.com)**
 
 ### What to Include in Your Report
 * Description of the vulnerability.
@@ -46,7 +46,7 @@ We use standard CVSS scoring to evaluate severity.
 
 * NEVER commit secrets, API keys, or raw passwords to the repository.
 * All environment variables must be documented in `.env.example` without real values.
-* Supabase RLS and environment-level secrets are managed strictly through secured CI/CD injection.
+* Database access credentials, encryption keys, and environment-level secrets are managed strictly through secured CI/CD injection and protected backend environments.
 
 ## AI-Generated Security Code Warning
 
