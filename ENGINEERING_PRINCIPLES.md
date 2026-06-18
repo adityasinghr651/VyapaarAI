@@ -1,6 +1,6 @@
-# FlowGuard Engineering Principles
+# VyapaarAI Engineering Principles
 
-Welcome to the core engineering principles of FlowGuard. As a commercial AI-native SaaS platform focused on automation reliability and compliance-grade orchestration, we adhere strictly to the following standards.
+Welcome to the core engineering principles of VyapaarAI. As a commercial SaaS platform focused on SMB operations, automation reliability, and billing orchestration, we adhere strictly to the following standards.
 
 ## Engineering Philosophy
 
@@ -10,7 +10,7 @@ Welcome to the core engineering principles of FlowGuard. As a commercial AI-nati
 * **Clarity before cleverness:** Code is read 100x more than it is written.
 * **Maintainability before abstraction:** Premature abstraction is the root of all evil.
 * **Security before automation:** No automation should compromise system security.
-* **Determinism before autonomous behavior:** We must always know exactly what our workflows will do.
+* **Determinism before autonomous behavior:** We must always know exactly what our operations and billing workflows will do.
 
 ## AI Coding Governance
 
@@ -51,13 +51,13 @@ Welcome to the core engineering principles of FlowGuard. As a commercial AI-nati
 
 ## Testing Philosophy
 
-* **Core Business Logic:** Tests are absolutely required for all core business logic and critical paths.
-* **Integration Tests:** Required for all API endpoints and database interactions.
+* **Core Business Logic:** Tests are absolutely required for all core business logic and critical paths (e.g., GST validation, sequential invoice generation).
+* **Integration/Unit Tests:** Required for all API endpoints and database interactions.
 
 ## Scalability Principles
 
 * Build stateless services where possible.
-* Rely on the database for strict consistency; use queues for asynchronous processing.
+* Rely on the database for strict consistency; use transactions for sensitive sequencing operations.
 * Optimize for the 99th percentile latency.
 
 ## Anti-Patterns to Avoid
