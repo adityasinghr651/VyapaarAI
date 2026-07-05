@@ -1,61 +1,81 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
-import { ProductsService } from './products.service';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  ParseUUIDPipe,
+  Patch,
+  Post,
+} from '@nestjs/common';
+import { Role } from '@prisma/client';
+import { CurrentTenant } from '../common/decorators/current-tenant.decorator';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { Roles } from '../common/decorators/roles.decorator';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
-import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
-import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { ProductsService } from './products.service';
 
-@UseGuards(JwtAuthGuard)
 @Controller('products')
 export class ProductsController {
   constructor(private readonly productsService: ProductsService) {}
 
+  @Roles(Role.OWNER, Role.ACCOUNTANT)
   @Post()
-  async create(@Body() dto: CreateProductDto, @CurrentUser('id') userId: string) {
-    const data = await this.productsService.create(dto, userId);
+  async create(
+    @Body() dto: CreateProductDto,
+    @CurrentTenant() tenantId: string,
+    @CurrentUser('id') actorId: string,
+  ) {
     return {
       message: 'Product created successfully',
-      data,
+      data: await this.productsService.create(dto, tenantId, actorId),
     };
   }
 
   @Get()
-  async findAll() {
-    const data = await this.productsService.findAll();
+  async findAll(@CurrentTenant() tenantId: string) {
     return {
       message: 'Products retrieved successfully',
-      data,
+      data: await this.productsService.findAll(tenantId),
     };
   }
 
   @Get(':id')
-  async findOne(@Param('id') id: string) {
-    const data = await this.productsService.findOne(id);
+  async findOne(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentTenant() tenantId: string,
+  ) {
     return {
       message: 'Product retrieved successfully',
-      data,
+      data: await this.productsService.findOne(id, tenantId),
     };
   }
 
+  @Roles(Role.OWNER, Role.ACCOUNTANT)
   @Patch(':id')
   async update(
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateProductDto,
-    @CurrentUser('id') userId: string,
+    @CurrentTenant() tenantId: string,
+    @CurrentUser('id') actorId: string,
   ) {
-    const data = await this.productsService.update(id, dto, userId);
     return {
       message: 'Product updated successfully',
-      data,
+      data: await this.productsService.update(id, dto, tenantId, actorId),
     };
   }
 
+  @Roles(Role.OWNER, Role.ACCOUNTANT)
   @Delete(':id')
-  async remove(@Param('id') id: string, @CurrentUser('id') userId: string) {
-    const data = await this.productsService.remove(id, userId);
+  async remove(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentTenant() tenantId: string,
+    @CurrentUser('id') actorId: string,
+  ) {
     return {
       message: 'Product deleted successfully',
-      data,
+      data: await this.productsService.remove(id, tenantId, actorId),
     };
   }
 }

@@ -6,9 +6,10 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc",
+    "dev": "tsc -w",
     "lint": "eslint src/**/*.ts"
   },
-  "dependencies": {
+  "devDependencies": {
     "typescript": "^5.4.5"
   }
 }

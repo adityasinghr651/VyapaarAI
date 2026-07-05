@@ -3,34 +3,35 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import api from '../../../lib/api-client';
-import { DollarSign, FileText, Users, ShoppingBag } from 'lucide-react';
+import { DollarSign, FileText, Users, ShoppingBag, Loader2 } from 'lucide-react';
 
 export function DashboardOverview() {
-  const { data: invoicesRes } = useQuery({
-    queryKey: ['invoices'],
-    queryFn: () => api.get('/invoices'),
+  const { data: summaryRes, isLoading: isSummaryLoading } = useQuery({
+    queryKey: ['dashboard', 'summary'],
+    queryFn: () => api.get('/dashboard/summary'),
   });
 
-  const { data: customersRes } = useQuery({
-    queryKey: ['customers'],
-    queryFn: () => api.get('/customers'),
+  const { data: recentInvoicesRes, isLoading: isRecentLoading } = useQuery({
+    queryKey: ['dashboard', 'recent-invoices'],
+    queryFn: () => api.get('/dashboard/recent-invoices'),
   });
 
-  const { data: productsRes } = useQuery({
-    queryKey: ['products'],
-    queryFn: () => api.get('/products'),
-  });
+  const summary = (summaryRes as any)?.data;
+  const recentInvoices = (recentInvoicesRes as any)?.data || [];
 
-  const invoices = (invoicesRes as any)?.data || [];
-  const customers = (customersRes as any)?.data || [];
-  const products = (productsRes as any)?.data || [];
+  if (isSummaryLoading || isRecentLoading) {
+    return (
+      <div className="flex h-64 items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
-  // Calculate statistics
-  const totalRevenue = invoices
-    .filter((inv: any) => inv.status === 'PAID')
-    .reduce((sum: number, inv: any) => sum + parseFloat(inv.total), 0);
-
-  const pendingInvoices = invoices.filter((inv: any) => inv.status !== 'PAID' && inv.status !== 'CANCELLED').length;
+  const totalRevenue = parseFloat(summary?.revenue || '0');
+  const totalInvoices = summary?.invoiceCounts?.total || 0;
+  const pendingInvoices = summary?.invoiceCounts?.unpaid || 0;
+  const customerCount = summary?.customerCount || 0;
+  const productCount = summary?.productCount || 0;
 
   return (
     <div className="space-y-8">
@@ -59,7 +60,7 @@ export function DashboardOverview() {
             <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Invoices</span>
             <FileText size={20} className="text-indigo-400" />
           </div>
-          <div className="text-2xl font-bold text-white mt-2">{invoices.length}</div>
+          <div className="text-2xl font-bold text-white mt-2">{totalInvoices}</div>
           <p className="text-[10px] text-slate-500 mt-1">{pendingInvoices} draft or unpaid invoices</p>
         </div>
 
@@ -69,7 +70,7 @@ export function DashboardOverview() {
             <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Active Customers</span>
             <Users size={20} className="text-emerald-400" />
           </div>
-          <div className="text-2xl font-bold text-white mt-2">{customers.length}</div>
+          <div className="text-2xl font-bold text-white mt-2">{customerCount}</div>
           <p className="text-[10px] text-slate-500 mt-1">Registered SMB contacts</p>
         </div>
 
@@ -79,7 +80,7 @@ export function DashboardOverview() {
             <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Inventory Items</span>
             <ShoppingBag size={20} className="text-amber-400" />
           </div>
-          <div className="text-2xl font-bold text-white mt-2">{products.length}</div>
+          <div className="text-2xl font-bold text-white mt-2">{productCount}</div>
           <p className="text-[10px] text-slate-500 mt-1">Catalog items tracked</p>
         </div>
       </div>
@@ -87,11 +88,11 @@ export function DashboardOverview() {
       {/* Recent Activity */}
       <div className="glass-panel p-6 rounded-xl">
         <h3 className="text-lg font-bold text-white mb-4">Recent Invoices</h3>
-        {invoices.length === 0 ? (
+        {recentInvoices.length === 0 ? (
           <p className="text-sm text-slate-500">No invoices generated yet.</p>
         ) : (
           <div className="divide-y divide-slate-900">
-            {invoices.slice(0, 5).map((inv: any) => (
+            {recentInvoices.map((inv: any) => (
               <div key={inv.id} className="py-3 flex items-center justify-between">
                 <div>
                   <p className="text-sm font-semibold text-white">{inv.invoiceNumber}</p>

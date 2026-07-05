@@ -1,0 +1,121 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  OWNER
+  ACCOUNTANT
+}
+
+enum InvoiceStatus {
+  DRAFT
+  SENT
+  PAID
+  OVERDUE
+  CANCELLED
+}
+
+model User {
+  id        String     @id @default(uuid())
+  email     String     @unique
+  password  String
+  name      String
+  role      Role       @default(ACCOUNTANT)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  auditLogs AuditLog[]
+  @@map("users")
+}
+
+model Customer {
+  id String @id @default(uuid())
+  name String
+  email String?
+  phone String?
+  address String?
+  gstin String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+  invoices Invoice[]
+  @@index([deletedAt])
+  @@map("customers")
+}
+
+model Product {
+  id String @id @default(uuid())
+  name String
+  description String?
+  sku String? @unique
+  price Decimal @db.Decimal(10, 2)
+  gstRate Decimal @default(18.0) @db.Decimal(5, 2)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+  invoiceItems InvoiceItem[]
+  @@index([deletedAt])
+  @@map("products")
+}
+
+model Invoice {
+  id String @id @default(uuid())
+  invoiceNumber String @unique
+  customerId String
+  customer Customer @relation(fields: [customerId], references: [id])
+  issueDate DateTime @default(now())
+  dueDate DateTime?
+  subtotal Decimal @db.Decimal(10, 2)
+  gstAmount Decimal @db.Decimal(10, 2)
+  total Decimal @db.Decimal(10, 2)
+  status InvoiceStatus @default(DRAFT)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+  items InvoiceItem[]
+  @@index([customerId])
+  @@index([status])
+  @@index([deletedAt])
+  @@map("invoices")
+}
+
+model InvoiceItem {
+  id String @id @default(uuid())
+  invoiceId String
+  invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  productId String
+  product Product @relation(fields: [productId], references: [id])
+  quantity Int
+  price Decimal @db.Decimal(10, 2)
+  gstRate Decimal @db.Decimal(5, 2)
+  gstAmount Decimal @db.Decimal(10, 2)
+  total Decimal @db.Decimal(10, 2)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@map("invoice_items")
+}
+
+model AuditLog {
+  id String @id @default(uuid())
+  action String
+  actorId String?
+  actor User? @relation(fields: [actorId], references: [id], onDelete: SetNull)
+  ipAddress String?
+  userAgent String?
+  details Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([actorId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+model InvoiceSequence {
+  year Int @id
+  sequence Int @default(0)
+  @@map("invoice_sequences")
+}

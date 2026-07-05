@@ -1,30 +1,45 @@
-import { IsNotEmpty, IsOptional, IsString, IsArray, ValidateNested, IsInt, Min, IsDateString } from 'class-validator';
 import { Type } from 'class-transformer';
+import {
+  ArrayMinSize,
+  IsArray,
+  IsDateString,
+  IsInt,
+  IsOptional,
+  IsString,
+  IsUUID,
+  MaxLength,
+  Min,
+  ValidateNested,
+} from 'class-validator';
 
 export class CreateInvoiceItemDto {
-  @IsString({ message: 'productId must be a string' })
-  @IsNotEmpty({ message: 'productId is required' })
+  @IsUUID()
   productId: string;
 
-  @IsInt({ message: 'quantity must be an integer' })
-  @Min(1, { message: 'quantity must be at least 1' })
+  @IsInt()
+  @Min(1)
   quantity: number;
 }
 
 export class CreateInvoiceDto {
-  @IsString({ message: 'customerId must be a string' })
-  @IsNotEmpty({ message: 'customerId is required' })
+  @IsUUID()
   customerId: string;
 
-  @IsDateString({}, { message: 'issueDate must be a valid date string' })
+  @IsDateString()
   @IsOptional()
   issueDate?: string;
 
-  @IsDateString({}, { message: 'dueDate must be a valid date string' })
+  @IsDateString()
   @IsOptional()
   dueDate?: string;
 
-  @IsArray({ message: 'items must be an array' })
+  @IsString()
+  @IsOptional()
+  @MaxLength(1000)
+  notes?: string;
+
+  @IsArray()
+  @ArrayMinSize(1)
   @ValidateNested({ each: true })
   @Type(() => CreateInvoiceItemDto)
   items: CreateInvoiceItemDto[];

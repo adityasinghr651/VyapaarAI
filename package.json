@@ -2,17 +2,17 @@
   "name": "vyapaarai-monorepo",
   "version": "1.0.0",
   "private": true,
-  "packageManager": "npm@11.12.1",
+  "packageManager": "npm@9.8.1",
   "description": "VyapaarAI SaaS Platform Monorepo Foundation",
   "workspaces": [
     "apps/*",
     "packages/*"
   ],
   "scripts": {
-    "dev": "turbo dev",
-    "build": "turbo build",
-    "lint": "turbo lint",
-    "test": "turbo test",
+    "dev": "concurrently \"npm --prefix packages/shared-types run dev\" \"npm --prefix apps/api run dev\" \"npm --prefix apps/web run dev\"",
+    "build": "npm run build --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
     "prepare": "husky install"
   },
   "devDependencies": {
@@ -20,6 +20,7 @@
     "@commitlint/config-conventional": "^19.2.2",
     "@typescript-eslint/eslint-plugin": "^7.18.0",
     "@typescript-eslint/parser": "^7.18.0",
+    "concurrently": "^10.0.3",
     "eslint": "^8.57.0",
     "eslint-config-prettier": "^10.1.8",
     "husky": "^8.0.3",

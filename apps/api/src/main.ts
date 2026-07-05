@@ -1,42 +1,39 @@
-import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
+import { NestFactory } from '@nestjs/core';
+import { Logger } from 'nestjs-pino';
+import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
 import { ConfigService } from './config/config.service';
 
-async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+async function bootstrap(): Promise<void> {
+  const app = await NestFactory.create(AppModule, {
+    bufferLogs: true,
+    rawBody: true,
+  });
+  app.useLogger(app.get(Logger));
 
-  const configService = app.get(ConfigService);
-
-  // Set global prefix
+  const config = app.get(ConfigService);
   app.setGlobalPrefix('api');
-
-  // Enable CORS
   app.enableCors({
     origin: true,
     credentials: true,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-    allowedHeaders: 'Content-Type, Accept, Authorization',
+    allowedHeaders:
+      'Content-Type, Accept, Authorization, X-Request-Id, X-Trace-Id',
   });
-
-  // Global validation pipe with transformation
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
+      forbidNonWhitelisted: true,
       transform: true,
     }),
   );
-
-  // Global error filter
   app.useGlobalFilters(new HttpExceptionFilter());
-
-  // Global success transform interceptor
   app.useGlobalInterceptors(new TransformInterceptor());
 
-  const port = configService.get('PORT') || 4000;
+  const port = config.get('PORT');
   await app.listen(port);
-  console.log(`🚀 VyapaarAI Backend Server running at: http://localhost:${port}/api`);
 }
-bootstrap();
+
+void bootstrap();
