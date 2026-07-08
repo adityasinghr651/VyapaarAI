@@ -1,5 +1,5 @@
 import { IsEnum, IsNotEmpty } from 'class-validator';
-import { InvoiceStatus } from '@vyapaarai/shared-types';
+import { InvoiceStatus } from '@prisma/client';
 
 export class UpdateInvoiceStatusDto {
   @IsEnum(InvoiceStatus, { message: 'status must be DRAFT, SENT, PAID, OVERDUE, or CANCELLED' })

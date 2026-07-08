@@ -48,3 +48,7 @@ coverage/
 .npm/
 .yarn-cache/
 .parcel-cache/
+
+# Local Dev Scripts
+start.bat
+

@@ -1,9 +1,20 @@
-import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
-import { Reflector } from '@nestjs/core';
+import {
+  CanActivate,
+  ExecutionContext,
+  Injectable,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { Request } from 'express';
+import { Reflector } from '@nestjs/core';
+import { PrismaService } from '../../database/prisma.service';
 import { ConfigService } from '../../config/config.service';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
+import { AuthenticatedRequest } from '../types/authenticated-request';
+import { UnauthorizedError } from '../errors/application.errors';
+
+interface TokenPayload {
+  sub: string;
+  tenantId: string;
+}
 
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
@@ -11,6 +22,7 @@ export class JwtAuthGuard implements CanActivate {
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
     private readonly reflector: Reflector,
+    private readonly prisma: PrismaService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -18,31 +30,44 @@ export class JwtAuthGuard implements CanActivate {
       context.getHandler(),
       context.getClass(),
     ]);
-    
     if (isPublic) {
       return true;
     }
 
-    const request = context.switchToHttp().getRequest<Request>();
-    const token = this.extractTokenFromHeader(request);
-    
+    const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
+    const token = this.extractToken(request);
     if (!token) {
-      throw new UnauthorizedException('Authentication token is missing');
+      throw new UnauthorizedError('Authentication token is missing');
     }
 
     try {
-      const payload = await this.jwtService.verifyAsync(token, {
+      const payload = await this.jwtService.verifyAsync<TokenPayload>(token, {
         secret: this.configService.get('JWT_SECRET'),
       });
-      (request as any)['user'] = payload;
-    } catch {
-      throw new UnauthorizedException('Authentication token is invalid or expired');
+      const user = await this.prisma.user.findFirst({
+        where: { id: payload.sub, tenantId: payload.tenantId },
+        select: {
+          id: true,
+          tenantId: true,
+          email: true,
+          name: true,
+          role: true,
+        },
+      });
+      if (!user) {
+        throw new UnauthorizedError('User or tenant is no longer active');
+      }
+      request.user = user;
+      return true;
+    } catch (error: unknown) {
+      if (error instanceof UnauthorizedError) {
+        throw error;
+      }
+      throw new UnauthorizedError('Authentication token is invalid or expired');
     }
-    
-    return true;
   }
 
-  private extractTokenFromHeader(request: Request): string | undefined {
+  private extractToken(request: AuthenticatedRequest): string | undefined {
     const [type, token] = request.headers.authorization?.split(' ') ?? [];
     return type === 'Bearer' ? token : undefined;
   }

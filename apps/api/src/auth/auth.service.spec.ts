@@ -11,13 +11,16 @@ describe('AuthService', () => {
 
   beforeEach(async () => {
     const mockPrisma = {
-      client: {
-        user: {
-          findUnique: jest.fn(),
-          create: jest.fn(),
-        },
+      user: {
+        findUnique: jest.fn(),
+        create: jest.fn(),
+      },
+      organization: {
+        findUnique: jest.fn(),
+        create: jest.fn(),
       },
     };
+    (mockPrisma as any).$transaction = jest.fn(async (cb) => cb(mockPrisma));
 
     const mockJwt = {
       signAsync: jest.fn().mockResolvedValue('test-jwt-token'),
@@ -47,8 +50,10 @@ describe('AuthService', () => {
 
   describe('register', () => {
     it('should create a new user and return a token', async () => {
-      prismaService.client.user.findUnique.mockResolvedValue(null);
-      prismaService.client.user.create.mockResolvedValue({
+      prismaService.user.findUnique.mockResolvedValue(null);
+      prismaService.organization.findUnique.mockResolvedValue(null);
+      prismaService.organization.create.mockResolvedValue({ id: 'org-1' });
+      prismaService.user.create.mockResolvedValue({
         id: '123',
         email: 'test@example.com',
         name: 'Test User',
@@ -61,9 +66,9 @@ describe('AuthService', () => {
         name: 'Test User',
       });
 
-      expect(prismaService.client.user.findUnique).toHaveBeenCalled();
-      expect(prismaService.client.user.create).toHaveBeenCalled();
-      expect(auditService.log).toHaveBeenCalledWith('USER_REGISTER', '123', expect.any(Object));
+      expect(prismaService.user.findUnique).toHaveBeenCalled();
+      expect(prismaService.user.create).toHaveBeenCalled();
+      expect(auditService.log).toHaveBeenCalledWith(expect.objectContaining({ action: 'USER_REGISTERED', actorId: '123' }), expect.any(Object));
       expect(result.token).toBe('test-jwt-token');
       expect(result.user.email).toBe('test@example.com');
     });

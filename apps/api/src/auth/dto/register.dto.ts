@@ -1,21 +1,28 @@
-import { IsEmail, IsNotEmpty, IsString, MinLength, IsEnum, IsOptional } from 'class-validator';
-import { Role } from '@vyapaarai/shared-types';
+import {
+  IsEmail,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  MaxLength,
+  MinLength,
+} from 'class-validator';
 
 export class RegisterDto {
   @IsEmail({}, { message: 'email must be a valid email address' })
-  @IsNotEmpty({ message: 'email is required' })
   email: string;
 
-  @IsString({ message: 'password must be a string' })
-  @IsNotEmpty({ message: 'password is required' })
-  @MinLength(6, { message: 'password must be at least 6 characters long' })
+  @IsString()
+  @MinLength(8, { message: 'password must be at least 8 characters long' })
+  @MaxLength(72)
   password: string;
 
-  @IsString({ message: 'name must be a string' })
-  @IsNotEmpty({ message: 'name is required' })
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(120)
   name: string;
 
-  @IsEnum(Role, { message: 'role must be OWNER or ACCOUNTANT' })
+  @IsString()
   @IsOptional()
-  role?: Role;
+  @MaxLength(160)
+  organizationName?: string;
 }

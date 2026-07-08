@@ -1,8 +1,9 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
+import { AuditService } from '../audit/audit.service';
+import { NotFoundError } from '../common/errors/application.errors';
 import { PrismaService } from '../database/prisma.service';
 import { CreateCustomerDto } from './dto/create-customer.dto';
 import { UpdateCustomerDto } from './dto/update-customer.dto';
-import { AuditService } from '../audit/audit.service';
 
 @Injectable()
 export class CustomersService {
@@ -11,62 +12,93 @@ export class CustomersService {
     private readonly auditService: AuditService,
   ) {}
 
-  async create(dto: CreateCustomerDto, actorId: string) {
-    const customer = await this.prisma.client.customer.create({
-      data: dto,
+  async create(dto: CreateCustomerDto, tenantId: string, actorId: string) {
+    return this.prisma.$transaction(async (transaction) => {
+      const customer = await transaction.customer.create({
+        data: {
+          ...dto,
+          tenantId,
+          gstin: dto.gstin?.toUpperCase(),
+        },
+      });
+      await this.auditService.log(
+        {
+          tenantId,
+          actorId,
+          action: 'CUSTOMER_CREATED',
+          entityType: 'Customer',
+          entityId: customer.id,
+          metadata: { name: customer.name },
+        },
+        transaction,
+      );
+      return customer;
     });
-
-    await this.auditService.log('CUSTOMER_CREATION', actorId, {
-      customerId: customer.id,
-      name: customer.name,
-    });
-
-    return customer;
   }
 
-  async findAll() {
-    return this.prisma.client.customer.findMany();
+  findAll(tenantId: string) {
+    return this.prisma.customer.findMany({
+      where: { tenantId, deletedAt: null },
+      orderBy: { createdAt: 'desc' },
+    });
   }
 
-  async findOne(id: string) {
-    const customer = await this.prisma.client.customer.findUnique({
-      where: { id },
+  async findOne(id: string, tenantId: string) {
+    const customer = await this.prisma.customer.findFirst({
+      where: { id, tenantId, deletedAt: null },
     });
-
     if (!customer) {
-      throw new NotFoundException('Customer not found');
+      throw new NotFoundError('Customer');
     }
-
     return customer;
   }
 
-  async update(id: string, dto: UpdateCustomerDto, actorId: string) {
-    await this.findOne(id);
-
-    const customer = await this.prisma.client.customer.update({
-      where: { id },
-      data: dto,
+  async update(
+    id: string,
+    dto: UpdateCustomerDto,
+    tenantId: string,
+    actorId: string,
+  ) {
+    await this.findOne(id, tenantId);
+    return this.prisma.$transaction(async (transaction) => {
+      const customer = await transaction.customer.update({
+        where: { id },
+        data: { ...dto, gstin: dto.gstin?.toUpperCase() },
+      });
+      await this.auditService.log(
+        {
+          tenantId,
+          actorId,
+          action: 'CUSTOMER_UPDATED',
+          entityType: 'Customer',
+          entityId: id,
+          metadata: { changedFields: Object.keys(dto) },
+        },
+        transaction,
+      );
+      return customer;
     });
-
-    await this.auditService.log('CUSTOMER_UPDATE', actorId, {
-      customerId: customer.id,
-      changes: dto,
-    });
-
-    return customer;
   }
 
-  async remove(id: string, actorId: string) {
-    await this.findOne(id);
-
-    const customer = await this.prisma.client.customer.delete({
-      where: { id },
+  async remove(id: string, tenantId: string, actorId: string) {
+    await this.findOne(id, tenantId);
+    return this.prisma.$transaction(async (transaction) => {
+      const customer = await transaction.customer.update({
+        where: { id },
+        data: { deletedAt: new Date() },
+      });
+      await this.auditService.log(
+        {
+          tenantId,
+          actorId,
+          action: 'CUSTOMER_DELETED',
+          entityType: 'Customer',
+          entityId: id,
+          metadata: {},
+        },
+        transaction,
+      );
+      return customer;
     });
-
-    await this.auditService.log('CUSTOMER_DELETION', actorId, {
-      customerId: id,
-    });
-
-    return customer;
   }
 }

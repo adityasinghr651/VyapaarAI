@@ -24,7 +24,7 @@ jobs:
         run: npm ci
 
       - name: Generate Prisma Client
-        run: npm --workspace=apps/api run prisma generate || true # Fallback if schema/connection relies on local env
+        run: npm run db:generate --workspace=apps/api
 
       - name: Run lint
         run: npm run lint

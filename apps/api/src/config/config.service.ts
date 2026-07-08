@@ -1,12 +1,27 @@
 import { Injectable, Logger } from '@nestjs/common';
 import * as dotenv from 'dotenv';
+import * as fs from 'fs';
+import * as path from 'path';
 import { z } from 'zod';
 
 const envSchema = z.object({
-  DATABASE_URL: z.string().url('DATABASE_URL must be a valid connection string URL'),
-  JWT_SECRET: z.string().min(8, 'JWT_SECRET must be at least 8 characters long'),
-  PORT: z.coerce.number().default(4000),
+  DATABASE_URL: z
+    .string()
+    .min(1)
+    .default(
+      'postgresql://postgres:postgrespassword@localhost:5432/vyapaarai_dev?schema=public',
+    ),
+  DIRECT_URL: z.string().min(1).optional(),
+  JWT_SECRET: z
+    .string()
+    .min(32)
+    .default('super-secret-development-key-change-in-production-12345678'),
+  PORT: z.coerce.number().int().positive().default(4000),
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
+  PDF_STORAGE_PATH: z.string().default('storage/invoices'),
+  WHATSAPP_VERIFY_TOKEN: z.string().optional(),
+  WHATSAPP_APP_SECRET: z.string().optional(),
+  WHATSAPP_SESSION_TTL_MINUTES: z.coerce.number().int().positive().default(1440),
 });
 
 export type EnvConfig = z.infer<typeof envSchema>;
@@ -17,19 +32,25 @@ export class ConfigService {
   private readonly config: EnvConfig;
 
   constructor() {
-    // Load env variables
-    dotenv.config();
-
-    const result = envSchema.safeParse(process.env);
-
-    if (!result.success) {
-      this.logger.error('❌ Invalid Environment Configuration:');
-      result.error.errors.forEach((err) => {
-        this.logger.error(`  - ${err.path.join('.')}: ${err.message}`);
-      });
-      process.exit(1);
+    const apiRoot = process.cwd();
+    const monorepoRoot = path.resolve(apiRoot, '../..');
+    for (const envPath of [
+      path.join(monorepoRoot, '.env.local'),
+      path.join(monorepoRoot, '.env'),
+      path.join(apiRoot, '.env'),
+    ]) {
+      if (fs.existsSync(envPath)) {
+        dotenv.config({ path: envPath });
+      }
     }
 
+    const result = envSchema.safeParse(process.env);
+    if (!result.success) {
+      for (const error of result.error.errors) {
+        this.logger.error(`${error.path.join('.')}: ${error.message}`);
+      }
+      throw new Error('Invalid environment configuration');
+    }
     this.config = result.data;
   }
 
