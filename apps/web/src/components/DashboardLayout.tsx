@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useStore } from '../store/useStore';
-import { LayoutDashboard, Users, Package, FileText, LogOut, User } from 'lucide-react';
+import { LayoutDashboard, Users, Package, FileText, LogOut, User, ShieldCheck } from 'lucide-react';
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -34,6 +34,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
     { name: 'Customers', href: '/customers', icon: Users },
     { name: 'Products', href: '/products', icon: Package },
     { name: 'Invoices', href: '/invoices', icon: FileText },
+    { name: 'Approvals', href: '/approvals', icon: ShieldCheck },
   ];
 
   return (
