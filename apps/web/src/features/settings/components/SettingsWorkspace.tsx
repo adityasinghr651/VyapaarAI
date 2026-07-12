@@ -7,6 +7,7 @@ import { Role } from '@vyapaarai/shared-types';
 import { useStore } from '../../../store/useStore';
 import { useToast } from '../../../components/ui/Toast';
 import { OrganizationProfileForm } from './OrganizationProfileForm';
+import { TeamMembersTable } from './TeamMembersTable';
 import { WhatsappConfigurationCard } from './WhatsappConfigurationCard';
 import { SubscriptionCard } from './SubscriptionCard';
 import { AuditTimeline } from './AuditTimeline';
@@ -57,9 +58,10 @@ export function SettingsWorkspace() {
 
       {/* Main Configuration Grid */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 items-start">
-        {/* Left / Main Column (2/3 width on XL): Profile Form + WhatsApp Configuration */}
+        {/* Left / Main Column (2/3 width on XL): Profile Form + Team Members + WhatsApp Configuration */}
         <div className="xl:col-span-2 space-y-6">
           <OrganizationProfileForm />
+          <TeamMembersTable />
           <WhatsappConfigurationCard />
         </div>
 
