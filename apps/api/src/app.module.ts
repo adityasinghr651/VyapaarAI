@@ -39,6 +39,7 @@ import { AiModule } from './ai/ai.module';
     DashboardModule,
     WhatsAppModule,
     ApprovalsModule,
+    AiModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },
