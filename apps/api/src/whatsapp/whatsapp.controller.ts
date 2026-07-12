@@ -21,16 +21,27 @@ export class WhatsAppController {
   constructor(private readonly whatsappService: WhatsAppService) {}
 
   @Get()
-  verify(
+  async verifyOrStatus(
     @Query('hub.mode') mode: string | undefined,
     @Query('hub.verify_token') token: string | undefined,
     @Query('hub.challenge') challenge: string | undefined,
     @Res() response: Response,
-  ): void {
-    if (!challenge || !this.whatsappService.verifySubscription(mode, token)) {
-      throw new UnauthorizedError('WhatsApp webhook verification failed');
+    @Headers('authorization') authHeader?: string,
+  ): Promise<void> {
+    if (challenge) {
+      if (!this.whatsappService.verifySubscription(mode, token)) {
+        throw new UnauthorizedError('WhatsApp webhook verification failed');
+      }
+      response.status(200).send(challenge);
+      return;
     }
-    response.status(200).send(challenge);
+
+    const statusData = await this.whatsappService.getWebhookStatus(authHeader);
+    response.status(200).json({
+      success: true,
+      message: 'WhatsApp webhook verification status retrieved successfully',
+      data: statusData,
+    });
   }
 
   @Throttle({ default: { limit: 300, ttl: 60_000 } })

@@ -1,11 +1,11 @@
 import React from 'react';
 import { AppShell } from '../../components/layout/AppShell';
-import { SettingsAuditOverview } from '../../features/settings/components/SettingsAuditOverview';
+import { SettingsWorkspace } from '../../features/settings/components/SettingsWorkspace';
 
 export default function SettingsPage() {
   return (
     <AppShell>
-      <SettingsAuditOverview />
+      <SettingsWorkspace />
     </AppShell>
   );
 }
