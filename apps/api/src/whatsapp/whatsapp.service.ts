@@ -13,6 +13,9 @@ import {
   WhatsAppWebhookPayload,
   whatsappWebhookSchema,
 } from './whatsapp-webhook.schema';
+import { AiParserService } from '../ai/ai-parser.service';
+import { ApprovalsService } from '../approvals/approvals.service';
+import { InvoicesService } from '../invoices/invoices.service';
 
 @Injectable()
 export class WhatsAppService {
@@ -22,6 +25,9 @@ export class WhatsAppService {
     private readonly prisma: PrismaService,
     private readonly config: ConfigService,
     private readonly jwtService: JwtService,
+    private readonly aiParser: AiParserService,
+    private readonly approvalsService: ApprovalsService,
+    private readonly invoicesService: InvoicesService,
   ) {}
 
   async getWebhookStatus(authHeader?: string): Promise<{ status: string; verified: boolean }> {
@@ -116,7 +122,14 @@ export class WhatsAppService {
         message,
         payload,
       );
-      inserted ? (processed += 1) : (duplicates += 1);
+      if (inserted) {
+        processed += 1;
+        this.processMessageWithAiAsync(organization.id, message).catch((err) => {
+          this.logger.error('Failed to process WhatsApp message asynchronously with AI', err);
+        });
+      } else {
+        duplicates += 1;
+      }
     }
     return { processed, duplicates };
   }
@@ -130,6 +143,7 @@ export class WhatsAppService {
       timestamp: string;
       type: string;
       text?: { body: string };
+      audio?: { id: string; mime_type: string };
     },
     payload: WhatsAppWebhookPayload,
   ): Promise<boolean> {
@@ -181,6 +195,160 @@ export class WhatsAppService {
         return false;
       }
       throw error;
+    }
+  }
+
+  private async processMessageWithAiAsync(
+    tenantId: string,
+    message: {
+      from: string;
+      id: string;
+      timestamp: string;
+      type: string;
+      text?: { body: string };
+      audio?: { id: string; mime_type: string };
+    },
+  ): Promise<void> {
+    try {
+      this.logger.log(`Processing WhatsApp message id: ${message.id} with AI...`);
+
+      let parsed: any;
+      if (message.type === 'text' && message.text) {
+        parsed = await this.aiParser.parseMessage(message.text.body, tenantId);
+      } else if (message.type === 'audio' && message.audio) {
+        const media = await this.downloadWhatsAppMedia(message.audio.id);
+        if (!media) {
+          this.logger.warn(`Could not retrieve media for audio ID: ${message.audio.id}. Skipping AI parsing.`);
+          return;
+        }
+        parsed = await this.aiParser.parseAudio(media.buffer, media.mimeType, tenantId);
+      } else {
+        this.logger.log(`WhatsApp message type "${message.type}" is not supported for AI parsing.`);
+        return;
+      }
+
+      if (!parsed) {
+        this.logger.warn('AI Parsing returned empty results.');
+        return;
+      }
+
+      this.logger.log(`AI Parsing result confidence: ${parsed.confidence}`);
+
+      const defaultUser = await this.prisma.user.findFirst({
+        where: { tenantId },
+        orderBy: { createdAt: 'asc' },
+      });
+      if (!defaultUser) {
+        this.logger.error(`No user found for organization ${tenantId}. Cannot execute AI actions.`);
+        return;
+      }
+
+      const threshold = this.config.get('AI_MIN_CONFIDENCE_THRESHOLD');
+
+      if (parsed.confidence >= threshold && parsed.items && parsed.items.length > 0) {
+        this.logger.log('High confidence: auto-creating draft invoice');
+        
+        const customerName = parsed.customer.name;
+        let dbCustomer = await this.prisma.customer.findFirst({
+          where: { tenantId, name: { equals: customerName, mode: 'insensitive' }, deletedAt: null },
+        });
+
+        if (!dbCustomer) {
+          dbCustomer = await this.prisma.customer.create({
+            data: {
+              tenantId,
+              name: customerName,
+              phone: parsed.customer.phone || null,
+              gstin: parsed.customer.gstin || null,
+            },
+          });
+        }
+
+        const itemsToCreate: { productId: string; quantity: number }[] = [];
+        for (const item of parsed.items) {
+          let dbProduct = await this.prisma.product.findFirst({
+            where: { tenantId, name: { equals: item.productName, mode: 'insensitive' }, deletedAt: null },
+          });
+
+          if (!dbProduct) {
+            dbProduct = await this.prisma.product.create({
+              data: {
+                tenantId,
+                name: item.productName,
+                price: new Prisma.Decimal(item.price || 0),
+                gstRate: new Prisma.Decimal(18),
+              },
+            });
+          }
+          itemsToCreate.push({
+            productId: dbProduct.id,
+            quantity: item.quantity,
+          });
+        }
+
+        await this.invoicesService.create(
+          {
+            customerId: dbCustomer.id,
+            notes: parsed.rawSummary || 'Auto-created via WhatsApp message extraction',
+            items: itemsToCreate,
+          },
+          tenantId,
+          defaultUser.id,
+        );
+
+        this.logger.log('Draft invoice created successfully from WhatsApp message.');
+      } else {
+        this.logger.log('Low confidence / missing fields: routing to approvals queue');
+        await this.approvalsService.create(
+          {
+            workflowType: 'WHATSAPP_INVOICE_PARSING',
+            entityType: 'Invoice',
+            payload: parsed as any,
+          },
+          tenantId,
+          defaultUser.id,
+        );
+      }
+    } catch (error) {
+      this.logger.error('Failed processing WhatsApp message with AI', error);
+    }
+  }
+
+  private async downloadWhatsAppMedia(mediaId: string): Promise<{ buffer: Buffer; mimeType: string } | null> {
+    const whatsappToken = this.config.get('WHATSAPP_VERIFY_TOKEN');
+    if (!whatsappToken) {
+      this.logger.warn('WhatsApp API credentials not fully configured. Simulating empty audio buffer for offline development.');
+      return {
+        buffer: Buffer.from('mock-audio-buffer'),
+        mimeType: 'audio/ogg',
+      };
+    }
+
+    try {
+      const graphUrl = `https://graph.facebook.com/v19.0/${mediaId}`;
+      const mediaResponse = await fetch(graphUrl, {
+        headers: { Authorization: `Bearer ${whatsappToken}` },
+      });
+      if (!mediaResponse.ok) {
+        throw new Error(`Graph API returned status ${mediaResponse.status}`);
+      }
+      const mediaData: any = await mediaResponse.json();
+      const downloadUrl = mediaData.url;
+
+      const fileResponse = await fetch(downloadUrl, {
+        headers: { Authorization: `Bearer ${whatsappToken}` },
+      });
+      if (!fileResponse.ok) {
+        throw new Error(`Media download returned status ${fileResponse.status}`);
+      }
+      const arrayBuffer = await fileResponse.arrayBuffer();
+      return {
+        buffer: Buffer.from(arrayBuffer),
+        mimeType: mediaData.mime_type || 'audio/ogg',
+      };
+    } catch (error) {
+      this.logger.error(`Error downloading WhatsApp media ${mediaId}`, error);
+      return null;
     }
   }
 }

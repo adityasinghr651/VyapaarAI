@@ -17,6 +17,7 @@ import { DashboardModule } from './dashboard/dashboard.module';
 import { WhatsAppModule } from './whatsapp/whatsapp.module';
 import { ApprovalsModule } from './approvals/approvals.module';
 import { OrganizationsModule } from './organizations/organizations.module';
+import { AiModule } from './ai/ai.module';
 
 @Module({
   imports: [

@@ -6,6 +6,7 @@ const messageSchema = z.object({
   timestamp: z.string(),
   type: z.string(),
   text: z.object({ body: z.string() }).optional(),
+  audio: z.object({ id: z.string(), mime_type: z.string() }).optional(),
 });
 
 export const whatsappWebhookSchema = z.object({

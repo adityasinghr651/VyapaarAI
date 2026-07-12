@@ -69,6 +69,7 @@ export class ApprovalsController {
         tenantId,
         actorId,
         dto.note,
+        dto.payload,
       ),
     };
   }
