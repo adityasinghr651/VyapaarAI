@@ -40,6 +40,354 @@ The repository has been updated with the following core architectural changes an
 
 ---
 
+
+
+
+
+
+---
+
+# Frontend and Backend Development & Integration
+
+Over the course of development, the platform has been transformed from a foundational monorepo into a fully integrated full-stack SMB management system. The following major integrations and features have been completed.
+
+## Frontend Development
+
+### User Authentication
+- Integrated secure Login and Registration workflows.
+- JWT-based authentication with protected routes.
+- Role-aware navigation for OWNER, ACCOUNTANT, and STAFF users.
+
+### Landing & Login Experience
+- Redesigned landing page with updated VyaparAI branding.
+- Integrated custom hero illustration and transparent branding assets.
+- Modern responsive login interface following Google Material 3 / Google Stitch design.
+
+### Dashboard
+- Built a responsive business dashboard.
+- Financial overview cards.
+- Recent activity timeline.
+- AI Assistant recommendation panel.
+- Quick action shortcuts.
+- Search and navigation improvements.
+
+### Customer Management
+- Connected Customer Manager with backend APIs.
+- Customer creation, editing, deletion and retrieval.
+- Validation, loading states and empty states.
+
+### Product Management
+- Complete Product Catalog integration.
+- Product CRUD operations.
+- Inventory management and GST support.
+
+### Invoice Builder
+- Dynamic invoice creation interface.
+- Customer and product selection.
+- Automatic GST calculations.
+- Sequential invoice generation support.
+
+### Approval Queue
+- Integrated approval workflow.
+- Approval history.
+- Decision panels.
+- Role-based approval permissions.
+
+### Audit Workspace
+- Complete audit log interface.
+- Backend-integrated audit history.
+- Pagination.
+- Filtering by entity and date.
+- Metadata inspection.
+- Approval history ledger.
+
+### Organization Settings
+- Organization profile management.
+- WhatsApp Business configuration.
+- Webhook verification status.
+- Organization information updates.
+- Read-only access for ACCOUNTANT users.
+
+### Team Management
+- Invite new organization members.
+- Update user roles.
+- Role-based restrictions.
+- Protection against removing the last remaining OWNER.
+- Dynamic team member listing.
+
+### UI System
+- Google Material 3 / Google Stitch inspired interface.
+- Responsive layouts.
+- Shared reusable UI components.
+- Toast notifications.
+- Modal drawers.
+- Status badges.
+- Skeleton loading states.
+- Empty state components.
+
+---
+
+## Backend Development
+
+### Authentication APIs
+- JWT authentication.
+- Password hashing with bcrypt.
+- Secure authorization guards.
+
+### Organization APIs
+- Organization profile retrieval and updates.
+- WhatsApp Phone Number configuration.
+- Organization settings management.
+
+### Team Management APIs
+- Fetch organization members.
+- Invite new users.
+- Update user roles.
+- Backend validation for role assignments.
+- Last OWNER protection.
+
+### Customer APIs
+- Complete CRUD endpoints for customer management.
+
+### Product APIs
+- Complete CRUD endpoints for inventory and product catalog.
+
+### Invoice APIs
+- Invoice generation.
+- Sequential invoice numbering.
+- Backend financial validation.
+- GST calculations.
+
+### Approval APIs
+- Approval queue retrieval.
+- Approval actions.
+- Historical approval ledger.
+
+### Audit APIs
+- Audit log retrieval.
+- Filtering.
+- Pagination.
+- Metadata support.
+- Actor and IP tracking.
+
+### Role-Based Access Control
+
+Implemented strict RBAC across the platform.
+
+**OWNER**
+- Full system access.
+- Organization management.
+- Team management.
+- Approval permissions.
+
+**ACCOUNTANT**
+- Read-only organization settings.
+- Operational module access.
+- Restricted administrative controls.
+
+**STAFF**
+- Operational workspace access only.
+- Restricted from organization settings and audit management.
+
+---
+
+## Full-Stack Integration
+
+The frontend has been fully integrated with the backend using React Query for server-state management and synchronized API communication.
+
+Completed integrations include:
+
+- Authentication
+- Dashboard
+- Customers
+- Products
+- Invoice Builder
+- Approval Queue
+- Audit Workspace
+- Organization Settings
+- Team Management
+- Role-Based Access Control
+
+All implemented modules have been verified through successful production builds (`npm run build`) and lint validation (`npm run lint`) with strict TypeScript enabled across the monorepo.
+
+---
+
+# How to Run
+
+## Prerequisites
+
+Before running the project, ensure the following software is installed:
+
+- Node.js (v22 or later)
+- npm
+- Docker Desktop
+
+---
+
+## 1. Clone the Repository
+
+```bash
+git clone https://github.com/adityasinghr651/VyapaarAI.git
+cd VyapaarAI
+```
+
+---
+
+## 2. Install Dependencies
+
+```bash
+npm install
+```
+
+---
+
+## 3. Configure Environment Variables
+
+### Backend
+
+Create a `.env` file inside:
+
+```text
+apps/api/
+```
+
+Populate it with the required database credentials, JWT secret, and other backend environment variables.
+
+### Frontend
+
+Create a `.env.local` file inside:
+
+```text
+apps/web/
+```
+
+Example:
+
+```env
+NEXT_PUBLIC_API_URL=http://localhost:4000
+```
+
+---
+
+## 4. Start PostgreSQL
+
+```bash
+docker compose up -d
+```
+
+---
+
+## 5. Generate Prisma Client
+
+```bash
+npm --workspace=apps/api run db:generate
+```
+
+---
+
+## 6. Run Database Migrations
+
+```bash
+npm --workspace=apps/api run db:migrate
+```
+
+---
+
+## 7. Seed the Development Database
+
+```bash
+npm --workspace=apps/api run db:seed
+```
+
+Development OWNER credentials:
+
+```text
+Email: owner@vyapaarai.com
+Password: DevOwner123!
+```
+
+> These credentials are intended for local development only.
+
+---
+
+## 8. Start the Application
+
+```bash
+npm run dev
+```
+
+---
+
+## 9. Access the Application
+
+Frontend:
+
+```text
+http://localhost:3000
+```
+
+Backend API:
+
+```text
+http://localhost:4000
+```
+
+---
+
+## 10. Useful Commands
+
+Run ESLint:
+
+```bash
+npm run lint
+```
+
+Run production build verification:
+
+```bash
+npm run build
+```
+
+Run tests:
+
+```bash
+npm run test
+```
+
+Open Prisma Studio:
+
+```bash
+npm --workspace=apps/api run db:studio
+```
+
+---
+
+## Troubleshooting
+
+If dependencies have changed:
+
+```bash
+npm install
+```
+
+If the Prisma schema has changed:
+
+```bash
+npm --workspace=apps/api run db:generate
+npm --workspace=apps/api run db:migrate
+```
+
+If Docker containers are not running:
+
+```bash
+docker compose up -d
+```
+
+
+
+
+
+
 ## 🛠️ Tech Stack
 
 * **Backend:** NestJS, TypeScript, Prisma ORM, PostgreSQL (JWT + bcrypt authentication)
