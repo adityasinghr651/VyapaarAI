@@ -5,4 +5,8 @@ export class DecisionDto {
   @IsOptional()
   @MaxLength(1000)
   note?: string;
+
+  @IsOptional()
+  payload?: Record<string, any>;
 }
+

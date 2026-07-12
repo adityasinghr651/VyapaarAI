@@ -22,6 +22,10 @@ const envSchema = z.object({
   WHATSAPP_VERIFY_TOKEN: z.string().optional(),
   WHATSAPP_APP_SECRET: z.string().optional(),
   WHATSAPP_SESSION_TTL_MINUTES: z.coerce.number().int().positive().default(1440),
+  AI_PROVIDER: z.enum(['gemini', 'openai']).default('gemini'),
+  GEMINI_API_KEY: z.string().optional(),
+  OPENAI_API_KEY: z.string().optional(),
+  AI_MIN_CONFIDENCE_THRESHOLD: z.coerce.number().min(0).max(1).default(0.90),
 });
 
 export type EnvConfig = z.infer<typeof envSchema>;
