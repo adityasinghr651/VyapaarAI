@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
 import {
   ConversationDirection,
   ConversationMessageStatus,
@@ -20,7 +21,34 @@ export class WhatsAppService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly config: ConfigService,
+    private readonly jwtService: JwtService,
   ) {}
+
+  async getWebhookStatus(authHeader?: string): Promise<{ status: string; verified: boolean }> {
+    let verified = false;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const token = authHeader.substring(7);
+      try {
+        const payload = await this.jwtService.verifyAsync<{ tenantId?: string }>(token, {
+          secret: this.config.get('JWT_SECRET'),
+        });
+        if (payload?.tenantId) {
+          const org = await this.prisma.organization.findUnique({
+            where: { id: payload.tenantId },
+          });
+          if (org && org.whatsappPhoneNumberId && org.whatsappPhoneNumberId.trim() !== '') {
+            verified = true;
+          }
+        }
+      } catch {
+        // Token invalid or expired, default to Verification Pending
+      }
+    }
+    return {
+      status: verified ? 'Verified' : 'Verification Pending',
+      verified,
+    };
+  }
 
   verifySubscription(mode?: string, token?: string): boolean {
     const expected = this.config.get('WHATSAPP_VERIFY_TOKEN');

@@ -1,11 +1,11 @@
 import React from 'react';
-import { DashboardLayout } from '../../components/DashboardLayout';
+import { AppShell } from '../../components/layout/AppShell';
 import { InvoiceBuilder } from '../../features/invoices/components/InvoiceBuilder';
 
 export default function InvoicesPage() {
   return (
-    <DashboardLayout>
+    <AppShell>
       <InvoiceBuilder />
-    </DashboardLayout>
+    </AppShell>
   );
 }

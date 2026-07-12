@@ -16,6 +16,7 @@ import { RequestContextMiddleware } from './common/middleware/request-context.mi
 import { DashboardModule } from './dashboard/dashboard.module';
 import { WhatsAppModule } from './whatsapp/whatsapp.module';
 import { ApprovalsModule } from './approvals/approvals.module';
+import { OrganizationsModule } from './organizations/organizations.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { ApprovalsModule } from './approvals/approvals.module';
     DatabaseModule,
     AuditModule,
     AuthModule,
+    OrganizationsModule,
     CustomersModule,
     ProductsModule,
     InvoicesModule,

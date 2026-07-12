@@ -2,241 +2,260 @@
 
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { CustomerDto } from '@vyapaarai/shared-types';
+import { Plus, Trash2, Edit3, Mail, Phone, MapPin, FileCheck, Users } from 'lucide-react';
 import api from '../../../lib/api-client';
-import { Plus, Trash2, Mail, Phone, MapPin, FileCheck } from 'lucide-react';
+import { DataTable, ColumnDef } from '../../../components/ui/DataTable';
+import { ModalDrawer } from '../../../components/ui/ModalDrawer';
+import { useToast } from '../../../components/ui/Toast';
+import { CustomerForm, CustomerFormData } from './CustomerForm';
+
+interface CustomersApiResponse {
+  message?: string;
+  data?: CustomerDto[];
+}
+
+interface SingleCustomerApiResponse {
+  message?: string;
+  data?: CustomerDto;
+}
 
 export function CustomerManager() {
   const queryClient = useQueryClient();
-  const [showAddForm, setShowAddForm] = useState(false);
+  const { success, error } = useToast();
   
-  // Form state
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
-  const [address, setAddress] = useState('');
-  const [gstin, setGstin] = useState('');
-  const [formError, setFormError] = useState<string | null>(null);
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [activeCustomer, setActiveCustomer] = useState<CustomerDto | null>(null);
 
   // Queries
-  const { data: customersRes, isLoading } = useQuery({
+  const { data: customersRes, isLoading } = useQuery<CustomersApiResponse | CustomerDto[]>({
     queryKey: ['customers'],
     queryFn: () => api.get('/customers'),
   });
 
-  const customers = (customersRes as any)?.data || [];
+  const customers: CustomerDto[] = Array.isArray(customersRes)
+    ? customersRes
+    : (customersRes as CustomersApiResponse)?.data || [];
 
   // Mutations
-  const createMutation = useMutation({
-    mutationFn: (newCustomer: any) => api.post('/customers', newCustomer),
-    onSuccess: () => {
+  const createMutation = useMutation<SingleCustomerApiResponse | CustomerDto, Error, CustomerFormData>({
+    mutationFn: (newCustomer) => api.post('/customers', newCustomer),
+    onSuccess: (res) => {
       queryClient.invalidateQueries({ queryKey: ['customers'] });
-      setShowAddForm(false);
-      // reset form
-      setName('');
-      setEmail('');
-      setPhone('');
-      setAddress('');
-      setGstin('');
-      setFormError(null);
+      setIsFormOpen(false);
+      setActiveCustomer(null);
+      const createdName = (res as SingleCustomerApiResponse)?.data?.name || 'Customer';
+      success('Customer Registered', `${createdName} profile has been successfully created.`);
     },
-    onError: (err: any) => {
-      setFormError(err.message || 'Failed to create customer');
+    onError: (err: Error) => {
+      error('Registration Failed', err.message || 'Failed to create customer profile');
     },
   });
 
-  const deleteMutation = useMutation({
+  const updateMutation = useMutation<SingleCustomerApiResponse | CustomerDto, Error, { id: string; data: CustomerFormData }>({
+    mutationFn: ({ id, data }) => api.patch(`/customers/${id}`, data),
+    onSuccess: (res) => {
+      queryClient.invalidateQueries({ queryKey: ['customers'] });
+      setIsFormOpen(false);
+      setActiveCustomer(null);
+      const updatedName = (res as SingleCustomerApiResponse)?.data?.name || 'Customer';
+      success('Customer Updated', `Profile for ${updatedName} has been updated.`);
+    },
+    onError: (err: Error) => {
+      error('Update Failed', err.message || 'Failed to update customer profile');
+    },
+  });
+
+  const deleteMutation = useMutation<SingleCustomerApiResponse | CustomerDto, Error, string>({
     mutationFn: (id: string) => api.delete(`/customers/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['customers'] });
+      success('Customer Removed', 'Customer profile has been permanently deleted.');
+    },
+    onError: (err: Error) => {
+      error('Deletion Failed', err.message || 'Failed to delete customer profile');
     },
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!name.trim()) {
-      setFormError('Customer name is required');
-      return;
-    }
-    createMutation.mutate({
-      name,
-      email: email || undefined,
-      phone: phone || undefined,
-      address: address || undefined,
-      gstin: gstin || undefined,
-    });
+  const handleOpenCreate = () => {
+    setActiveCustomer(null);
+    setIsFormOpen(true);
   };
 
-  return (
-    <div className="space-y-8">
-      <div className="flex items-center justify-between">
+  const handleOpenEdit = (customer: CustomerDto) => {
+    setActiveCustomer(customer);
+    setIsFormOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsFormOpen(false);
+    setActiveCustomer(null);
+  };
+
+  const handleFormSubmit = async (formData: CustomerFormData) => {
+    if (activeCustomer) {
+      await updateMutation.mutateAsync({ id: activeCustomer.id, data: formData });
+    } else {
+      await createMutation.mutateAsync(formData);
+    }
+  };
+
+  const handleDeleteCustomer = (customer: CustomerDto) => {
+    if (window.confirm(`Are you sure you want to delete customer "${customer.name}"? This action cannot be undone.`)) {
+      deleteMutation.mutate(customer.id);
+    }
+  };
+
+  const columns: ColumnDef<CustomerDto>[] = [
+    {
+      header: 'Customer Details',
+      accessorKey: 'name',
+      cell: (cust) => (
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tight text-white">Customers</h1>
-          <p className="text-muted-foreground text-sm">Register and manage SMB customer profiles.</p>
+          <div className="font-bold text-on-surface tracking-wide">{cust.name}</div>
+          {cust.address && (
+            <div className="flex items-center text-xs text-on-surface-variant mt-1 max-w-xs truncate">
+              <MapPin size={12} className="mr-1 shrink-0 text-on-surface-variant/60" />
+              <span>{cust.address}</span>
+            </div>
+          )}
+        </div>
+      ),
+    },
+    {
+      header: 'GSTIN',
+      accessorKey: 'gstin',
+      cell: (cust) =>
+        cust.gstin ? (
+          <div className="flex items-center space-x-1.5 rounded-md bg-green-50 border border-green-200 px-2.5 py-1 w-fit">
+            <FileCheck size={14} className="text-green-600 shrink-0" />
+            <span className="font-mono text-xs font-semibold text-green-700">{cust.gstin}</span>
+          </div>
+        ) : (
+          <span className="rounded bg-surface-container border border-outline-variant px-2 py-0.5 text-xs font-medium text-on-surface-variant">
+            Unregistered
+          </span>
+        ),
+    },
+    {
+      header: 'Contact Info',
+      accessorKey: 'email',
+      cell: (cust) => (
+        <div className="space-y-1 text-xs text-on-surface">
+          {cust.email && (
+            <div className="flex items-center">
+              <Mail size={12} className="mr-1.5 text-on-surface-variant/70 shrink-0" />
+              <span className="truncate max-w-[180px]">{cust.email}</span>
+            </div>
+          )}
+          {cust.phone && (
+            <div className="flex items-center">
+              <Phone size={12} className="mr-1.5 text-on-surface-variant/70 shrink-0" />
+              <span className="font-mono">{cust.phone}</span>
+            </div>
+          )}
+          {!cust.email && !cust.phone && (
+            <span className="text-on-surface-variant/50 italic">No contact details</span>
+          )}
+        </div>
+      ),
+    },
+    {
+      header: 'Actions',
+      className: 'text-right',
+      cell: (cust) => (
+        <div className="flex items-center justify-end space-x-2">
+          <button
+            type="button"
+            onClick={() => handleOpenEdit(cust)}
+            disabled={updateMutation.isPending || deleteMutation.isPending}
+            aria-label={`Edit ${cust.name}`}
+            className="rounded-lg p-2 text-on-surface-variant transition-colors hover:bg-surface-container hover:text-on-surface active:scale-95 disabled:opacity-50"
+          >
+            <Edit3 size={16} />
+          </button>
+          <button
+            type="button"
+            onClick={() => handleDeleteCustomer(cust)}
+            disabled={updateMutation.isPending || deleteMutation.isPending}
+            aria-label={`Delete ${cust.name}`}
+            className="rounded-lg p-2 text-error transition-colors hover:bg-error/10 hover:text-error active:scale-95 disabled:opacity-50"
+          >
+            <Trash2 size={16} />
+          </button>
+        </div>
+      ),
+    },
+  ];
+
+  return (
+    <div className="space-y-8 animate-in fade-in duration-300">
+      {/* Page Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2.5">
+            <Users className="h-7 w-7 text-primary" />
+            <h1 className="text-3xl font-extrabold tracking-tight text-on-surface">Customers</h1>
+          </div>
+          <p className="text-on-surface-variant text-sm mt-1">
+            Register, manage, and audit your SMB customer profiles and GSTIN records.
+          </p>
         </div>
         <button
-          onClick={() => setShowAddForm(!showAddForm)}
-          className="flex items-center space-x-2 bg-primary hover:bg-violet-600 active:scale-95 transition-all text-white font-semibold py-2 px-4 rounded-lg text-sm"
+          type="button"
+          onClick={handleOpenCreate}
+          className="flex items-center justify-center space-x-2 bg-primary hover:bg-violet-600 active:scale-95 transition-all text-white font-semibold py-2.5 px-5 rounded-xl text-sm shadow-md shrink-0"
         >
           <Plus size={16} />
-          <span>{showAddForm ? 'Cancel' : 'Add Customer'}</span>
+          <span>Add Customer</span>
         </button>
       </div>
 
-      {showAddForm && (
-        <div className="glass-panel p-6 rounded-xl animate-in fade-in slide-in-from-top-4 duration-200">
-          <h3 className="text-lg font-bold text-white mb-4">New Customer Details</h3>
-          {formError && (
-            <div className="mb-4 p-3 bg-red-950/40 border border-red-900/60 rounded text-red-400 text-xs">
-              {formError}
-            </div>
-          )}
-          <form onSubmit={handleSubmit} className="grid gap-4 sm:grid-cols-2">
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
-                Company Name *
-              </label>
-              <input
-                type="text"
-                required
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="glass-input w-full p-2.5 rounded-lg text-sm text-white focus:outline-none"
-                placeholder="ACME Corporation"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
-                GSTIN (Optional)
-              </label>
-              <input
-                type="text"
-                value={gstin}
-                onChange={(e) => setGstin(e.target.value)}
-                className="glass-input w-full p-2.5 rounded-lg text-sm text-white focus:outline-none"
-                placeholder="09AAACA1111A1Z1"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
-                Email Address
-              </label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="glass-input w-full p-2.5 rounded-lg text-sm text-white focus:outline-none"
-                placeholder="billing@acme.com"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
-                Phone Number
-              </label>
-              <input
-                type="text"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                className="glass-input w-full p-2.5 rounded-lg text-sm text-white focus:outline-none"
-                placeholder="+91 99999 99999"
-              />
-            </div>
-            <div className="sm:col-span-2">
-              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
-                Billing Address
-              </label>
-              <textarea
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
-                className="glass-input w-full p-2.5 rounded-lg text-sm text-white focus:outline-none h-20"
-                placeholder="123 Industrial Area, Sector 5..."
-              />
-            </div>
-            <div className="sm:col-span-2 flex justify-end">
-              <button
-                type="submit"
-                disabled={createMutation.isPending}
-                className="py-2.5 px-6 bg-primary hover:bg-violet-600 active:scale-95 transition-all text-white font-semibold rounded-lg text-sm"
-              >
-                {createMutation.isPending ? 'Saving...' : 'Save Customer'}
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
+      {/* Customers Data Table Component */}
+      <DataTable<CustomerDto>
+        columns={columns}
+        data={customers}
+        isLoading={isLoading}
+        keyExtractor={(item) => item.id}
+        emptyState={{
+          title: 'No Customers Registered',
+          description:
+            'Your business has no customer profiles recorded yet. Register your first SMB customer profile to enable GST invoicing and ledger tracking.',
+          action: (
+            <button
+              type="button"
+              onClick={handleOpenCreate}
+              className="mt-2 flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-white shadow transition-all hover:bg-violet-600 active:scale-95"
+            >
+              <Plus size={14} />
+              <span>Add First Customer</span>
+            </button>
+          ),
+        }}
+      />
 
-      {/* Customers List */}
-      <div className="glass-panel rounded-xl overflow-hidden">
-        {isLoading ? (
-          <div className="p-8 text-center text-sm text-slate-500">Loading customers...</div>
-        ) : customers.length === 0 ? (
-          <div className="p-8 text-center text-sm text-slate-500">No customers registered yet.</div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b border-slate-900 bg-slate-950/40 text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                  <th className="p-4">Customer Details</th>
-                  <th className="p-4">GSTIN</th>
-                  <th className="p-4">Contact Info</th>
-                  <th className="p-4 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-900 text-sm">
-                {customers.map((cust: any) => (
-                  <tr key={cust.id} className="hover:bg-slate-900/20 transition-all">
-                    <td className="p-4">
-                      <div className="font-semibold text-white">{cust.name}</div>
-                      {cust.address && (
-                        <div className="flex items-center text-xs text-slate-500 mt-1 max-w-xs truncate">
-                          <MapPin size={10} className="mr-1 shrink-0" />
-                          <span>{cust.address}</span>
-                        </div>
-                      )}
-                    </td>
-                    <td className="p-4 text-slate-300">
-                      {cust.gstin ? (
-                        <div className="flex items-center space-x-1">
-                          <FileCheck size={14} className="text-emerald-400" />
-                          <span className="font-mono text-xs">{cust.gstin}</span>
-                        </div>
-                      ) : (
-                        <span className="text-slate-600 text-xs font-medium">Unregistered</span>
-                      )}
-                    </td>
-                    <td className="p-4 space-y-1 text-xs text-slate-400">
-                      {cust.email && (
-                        <div className="flex items-center">
-                          <Mail size={12} className="mr-1.5 text-slate-500" />
-                          <span>{cust.email}</span>
-                        </div>
-                      )}
-                      {cust.phone && (
-                        <div className="flex items-center">
-                          <Phone size={12} className="mr-1.5 text-slate-500" />
-                          <span>{cust.phone}</span>
-                        </div>
-                      )}
-                    </td>
-                    <td className="p-4 text-right">
-                      <button
-                        onClick={() => {
-                          if (confirm(`Delete customer ${cust.name}?`)) {
-                            deleteMutation.mutate(cust.id);
-                          }
-                        }}
-                        disabled={deleteMutation.isPending}
-                        className="text-red-400 hover:text-red-300 p-2 rounded-lg hover:bg-red-950/20 active:scale-90 transition-all disabled:opacity-50"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+      {/* Create / Edit Customer Modal Drawer Component */}
+      <ModalDrawer
+        isOpen={isFormOpen}
+        onClose={handleCloseModal}
+        title={activeCustomer ? 'Edit Customer Profile' : 'New Customer Profile'}
+        description={
+          activeCustomer
+            ? `Update profile details and GSTIN records for ${activeCustomer.name}.`
+            : 'Register a new SMB customer profile for GST compliance and automated invoicing.'
+        }
+        maxWidth="max-w-xl"
+        position="modal"
+      >
+        <div className="pt-2">
+          <CustomerForm
+            initialData={activeCustomer || undefined}
+            onSubmit={handleFormSubmit}
+            onCancel={handleCloseModal}
+            isLoading={createMutation.isPending || updateMutation.isPending}
+          />
+        </div>
+      </ModalDrawer>
     </div>
   );
 }

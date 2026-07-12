@@ -2,246 +2,255 @@
 
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { ProductDto } from '@vyapaarai/shared-types';
+import { Plus, Trash2, Edit3, Layers, HelpCircle, Package } from 'lucide-react';
 import api from '../../../lib/api-client';
-import { Plus, Trash2, Layers, HelpCircle } from 'lucide-react';
+import { DataTable, ColumnDef } from '../../../components/ui/DataTable';
+import { ModalDrawer } from '../../../components/ui/ModalDrawer';
+import { useToast } from '../../../components/ui/Toast';
+import { ProductForm, ProductFormData } from './ProductForm';
+
+interface ProductsApiResponse {
+  message?: string;
+  data?: ProductDto[];
+}
+
+interface SingleProductApiResponse {
+  message?: string;
+  data?: ProductDto;
+}
 
 export function ProductCatalog() {
   const queryClient = useQueryClient();
-  const [showAddForm, setShowAddForm] = useState(false);
+  const { success, error } = useToast();
 
-  // Form state
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
-  const [sku, setSku] = useState('');
-  const [price, setPrice] = useState('');
-  const [gstRate, setGstRate] = useState('18.00'); // default to 18% static GST
-  const [formError, setFormError] = useState<string | null>(null);
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [activeProduct, setActiveProduct] = useState<ProductDto | null>(null);
 
   // Queries
-  const { data: productsRes, isLoading } = useQuery({
+  const { data: productsRes, isLoading } = useQuery<ProductsApiResponse | ProductDto[]>({
     queryKey: ['products'],
     queryFn: () => api.get('/products'),
   });
 
-  const products = (productsRes as any)?.data || [];
+  const products: ProductDto[] = Array.isArray(productsRes)
+    ? productsRes
+    : (productsRes as ProductsApiResponse)?.data || [];
 
   // Mutations
-  const createMutation = useMutation({
-    mutationFn: (newProduct: any) => api.post('/products', newProduct),
-    onSuccess: () => {
+  const createMutation = useMutation<SingleProductApiResponse | ProductDto, Error, ProductFormData>({
+    mutationFn: (newProduct) => api.post('/products', newProduct),
+    onSuccess: (res) => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
-      setShowAddForm(false);
-      setName('');
-      setDescription('');
-      setSku('');
-      setPrice('');
-      setGstRate('18.00');
-      setFormError(null);
+      setIsFormOpen(false);
+      setActiveProduct(null);
+      const createdName = (res as SingleProductApiResponse)?.data?.name || 'Product';
+      success('Product Cataloged', `${createdName} has been successfully added to your inventory catalog.`);
     },
-    onError: (err: any) => {
-      setFormError(err.message || 'Failed to create product');
+    onError: (err: Error) => {
+      error('Creation Failed', err.message || 'Failed to add product to catalog');
     },
   });
 
-  const deleteMutation = useMutation({
+  const updateMutation = useMutation<SingleProductApiResponse | ProductDto, Error, { id: string; data: ProductFormData }>({
+    mutationFn: ({ id, data }) => api.patch(`/products/${id}`, data),
+    onSuccess: (res) => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      setIsFormOpen(false);
+      setActiveProduct(null);
+      const updatedName = (res as SingleProductApiResponse)?.data?.name || 'Product';
+      success('Product Updated', `Specifications for ${updatedName} have been updated.`);
+    },
+    onError: (err: Error) => {
+      error('Update Failed', err.message || 'Failed to update product details');
+    },
+  });
+
+  const deleteMutation = useMutation<SingleProductApiResponse | ProductDto, Error, string>({
     mutationFn: (id: string) => api.delete(`/products/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
+      success('Product Removed', 'Catalog item has been permanently deleted.');
+    },
+    onError: (err: Error) => {
+      error('Deletion Failed', err.message || 'Failed to delete product from catalog');
     },
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!name.trim()) {
-      setFormError('Product name is required');
-      return;
-    }
-    const parsedPrice = parseFloat(price);
-    if (isNaN(parsedPrice) || parsedPrice < 0) {
-      setFormError('Please enter a valid price (>= 0)');
-      return;
-    }
-    createMutation.mutate({
-      name,
-      description: description || undefined,
-      sku: sku || undefined,
-      price: parsedPrice,
-      gstRate: parseFloat(gstRate),
-    });
+  const handleOpenCreate = () => {
+    setActiveProduct(null);
+    setIsFormOpen(true);
   };
 
-  return (
-    <div className="space-y-8">
-      <div className="flex items-center justify-between">
+  const handleOpenEdit = (product: ProductDto) => {
+    setActiveProduct(product);
+    setIsFormOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsFormOpen(false);
+    setActiveProduct(null);
+  };
+
+  const handleFormSubmit = async (formData: ProductFormData) => {
+    if (activeProduct) {
+      await updateMutation.mutateAsync({ id: activeProduct.id, data: formData });
+    } else {
+      await createMutation.mutateAsync(formData);
+    }
+  };
+
+  const handleDeleteProduct = (product: ProductDto) => {
+    if (window.confirm(`Are you sure you want to delete product "${product.name}"? This action cannot be undone.`)) {
+      deleteMutation.mutate(product.id);
+    }
+  };
+
+  const columns: ColumnDef<ProductDto>[] = [
+    {
+      header: 'Product Details',
+      accessorKey: 'name',
+      cell: (prod) => (
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tight text-white">Products</h1>
-          <p className="text-muted-foreground text-sm">Inventory stock items catalog for invoicing.</p>
+          <div className="font-bold text-on-surface tracking-wide">{prod.name}</div>
+          {prod.description && (
+            <div className="flex items-center text-xs text-on-surface-variant mt-1 max-w-sm truncate">
+              <HelpCircle size={12} className="mr-1 shrink-0 text-on-surface-variant/60" />
+              <span>{prod.description}</span>
+            </div>
+          )}
+        </div>
+      ),
+    },
+    {
+      header: 'SKU / Code',
+      accessorKey: 'sku',
+      cell: (prod) =>
+        prod.sku ? (
+          <div className="flex items-center space-x-1.5">
+            <Layers size={14} className="text-on-surface-variant/70 shrink-0" />
+            <span className="font-mono text-xs font-semibold text-on-surface">{prod.sku}</span>
+          </div>
+        ) : (
+          <span className="rounded bg-surface-container border border-outline-variant px-2 py-0.5 text-xs font-medium text-on-surface-variant">
+            None
+          </span>
+        ),
+    },
+    {
+      header: 'Tax Rate',
+      accessorKey: 'gstRate',
+      cell: (prod) => (
+        <span className="text-xs bg-primary/10 text-primary border border-primary/20 px-2 py-1 rounded-md font-semibold tracking-wide">
+          {parseFloat(prod.gstRate).toFixed(1)}% GST
+        </span>
+      ),
+    },
+    {
+      header: 'Unit Price',
+      accessorKey: 'price',
+      cell: (prod) => (
+        <span className="font-mono font-bold text-on-surface text-sm">
+          ₹{parseFloat(prod.price).toFixed(2)}
+        </span>
+      ),
+    },
+    {
+      header: 'Actions',
+      className: 'text-right',
+      cell: (prod) => (
+        <div className="flex items-center justify-end space-x-2">
+          <button
+            type="button"
+            onClick={() => handleOpenEdit(prod)}
+            disabled={updateMutation.isPending || deleteMutation.isPending}
+            aria-label={`Edit ${prod.name}`}
+            className="rounded-lg p-2 text-on-surface-variant transition-colors hover:bg-surface-container hover:text-on-surface active:scale-95 disabled:opacity-50"
+          >
+            <Edit3 size={16} />
+          </button>
+          <button
+            type="button"
+            onClick={() => handleDeleteProduct(prod)}
+            disabled={updateMutation.isPending || deleteMutation.isPending}
+            aria-label={`Delete ${prod.name}`}
+            className="rounded-lg p-2 text-error transition-colors hover:bg-error/10 hover:text-error active:scale-95 disabled:opacity-50"
+          >
+            <Trash2 size={16} />
+          </button>
+        </div>
+      ),
+    },
+  ];
+
+  return (
+    <div className="space-y-8 animate-in fade-in duration-300">
+      {/* Page Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2.5">
+            <Package className="h-7 w-7 text-primary" />
+            <h1 className="text-3xl font-extrabold tracking-tight text-on-surface">Products</h1>
+          </div>
+          <p className="text-on-surface-variant text-sm mt-1">
+            Catalog inventory items, services, unit prices, and GST slab rates for invoicing.
+          </p>
         </div>
         <button
-          onClick={() => setShowAddForm(!showAddForm)}
-          className="flex items-center space-x-2 bg-primary hover:bg-violet-600 active:scale-95 transition-all text-white font-semibold py-2 px-4 rounded-lg text-sm"
+          type="button"
+          onClick={handleOpenCreate}
+          className="flex items-center justify-center space-x-2 bg-primary hover:bg-primary/90 active:scale-95 transition-all text-white font-semibold py-2.5 px-5 rounded-xl text-sm shadow-md shrink-0"
         >
           <Plus size={16} />
-          <span>{showAddForm ? 'Cancel' : 'Add Product'}</span>
+          <span>Add Product</span>
         </button>
       </div>
 
-      {showAddForm && (
-        <div className="glass-panel p-6 rounded-xl animate-in fade-in slide-in-from-top-4 duration-200">
-          <h3 className="text-lg font-bold text-white mb-4">New Product Details</h3>
-          {formError && (
-            <div className="mb-4 p-3 bg-red-950/40 border border-red-900/60 rounded text-red-400 text-xs">
-              {formError}
-            </div>
-          )}
-          <form onSubmit={handleSubmit} className="grid gap-4 sm:grid-cols-2">
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
-                Item Name *
-              </label>
-              <input
-                type="text"
-                required
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="glass-input w-full p-2.5 rounded-lg text-sm text-white focus:outline-none"
-                placeholder="Enterprise Developer Laptop"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
-                SKU / Part Number
-              </label>
-              <input
-                type="text"
-                value={sku}
-                onChange={(e) => setSku(e.target.value)}
-                className="glass-input w-full p-2.5 rounded-lg text-sm text-white focus:outline-none"
-                placeholder="PROD-LAPTOP-01"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
-                Unit Price (INR) *
-              </label>
-              <input
-                type="number"
-                step="0.01"
-                required
-                value={price}
-                onChange={(e) => setPrice(e.target.value)}
-                className="glass-input w-full p-2.5 rounded-lg text-sm text-white focus:outline-none"
-                placeholder="85000.00"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
-                GST Rate (%)
-              </label>
-              <select
-                value={gstRate}
-                onChange={(e) => setGstRate(e.target.value)}
-                className="glass-input w-full p-2.5 rounded-lg text-sm text-white focus:outline-none bg-slate-900"
-              >
-                <option value="18.00">18% (Standard Services/Goods)</option>
-                <option value="12.00">12% (IT Accessories/Hardware)</option>
-                <option value="28.00">28% (Luxury Goods)</option>
-                <option value="5.00">5% (Essential Goods)</option>
-                <option value="0.00">0% (Exempt)</option>
-              </select>
-            </div>
-            <div className="sm:col-span-2">
-              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
-                Item Description
-              </label>
-              <textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                className="glass-input w-full p-2.5 rounded-lg text-sm text-white focus:outline-none h-20"
-                placeholder="Details of the product specifications..."
-              />
-            </div>
-            <div className="sm:col-span-2 flex justify-end">
-              <button
-                type="submit"
-                disabled={createMutation.isPending}
-                className="py-2.5 px-6 bg-primary hover:bg-violet-600 active:scale-95 transition-all text-white font-semibold rounded-lg text-sm"
-              >
-                {createMutation.isPending ? 'Saving...' : 'Save Product'}
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
+      {/* Products Data Table Component */}
+      <DataTable<ProductDto>
+        columns={columns}
+        data={products}
+        isLoading={isLoading}
+        keyExtractor={(item) => item.id}
+        emptyState={{
+          title: 'No Products Cataloged',
+          description:
+            'Your catalog currently contains no inventory items or services. Add your first product to enable fast line-item selection during GST invoicing.',
+          action: (
+            <button
+              type="button"
+              onClick={handleOpenCreate}
+              className="mt-2 flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-white shadow transition-all hover:bg-violet-600 active:scale-95"
+            >
+              <Plus size={14} />
+              <span>Add First Product</span>
+            </button>
+          ),
+        }}
+      />
 
-      {/* Products list */}
-      <div className="glass-panel rounded-xl overflow-hidden">
-        {isLoading ? (
-          <div className="p-8 text-center text-sm text-slate-500">Loading products...</div>
-        ) : products.length === 0 ? (
-          <div className="p-8 text-center text-sm text-slate-500">No products cataloged yet.</div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b border-slate-900 bg-slate-950/40 text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                  <th className="p-4">Product details</th>
-                  <th className="p-4">SKU / Code</th>
-                  <th className="p-4">Tax rate</th>
-                  <th className="p-4">Unit price</th>
-                  <th className="p-4 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-900 text-sm">
-                {products.map((prod: any) => (
-                  <tr key={prod.id} className="hover:bg-slate-900/20 transition-all">
-                    <td className="p-4">
-                      <div className="font-semibold text-white">{prod.name}</div>
-                      {prod.description && (
-                        <div className="flex items-center text-xs text-slate-500 mt-1 max-w-sm truncate">
-                          <HelpCircle size={10} className="mr-1 shrink-0" />
-                          <span>{prod.description}</span>
-                        </div>
-                      )}
-                    </td>
-                    <td className="p-4">
-                      {prod.sku ? (
-                        <div className="flex items-center space-x-1">
-                          <Layers size={14} className="text-slate-500" />
-                          <span className="font-mono text-xs text-slate-300">{prod.sku}</span>
-                        </div>
-                      ) : (
-                        <span className="text-slate-600 text-xs font-medium">None</span>
-                      )}
-                    </td>
-                    <td className="p-4">
-                      <span className="text-xs bg-indigo-950/40 text-indigo-400 border border-indigo-900/60 px-1.5 py-0.5 rounded font-medium">
-                        {parseFloat(prod.gstRate).toFixed(1)}% GST
-                      </span>
-                    </td>
-                    <td className="p-4 font-mono font-semibold text-white">
-                      ₹{parseFloat(prod.price).toFixed(2)}
-                    </td>
-                    <td className="p-4 text-right">
-                      <button
-                        onClick={() => {
-                          if (confirm(`Delete product ${prod.name}?`)) {
-                            deleteMutation.mutate(prod.id);
-                          }
-                        }}
-                        disabled={deleteMutation.isPending}
-                        className="text-red-400 hover:text-red-300 p-2 rounded-lg hover:bg-red-950/20 active:scale-90 transition-all disabled:opacity-50"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+      {/* Create / Edit Product Modal Drawer Component */}
+      <ModalDrawer
+        isOpen={isFormOpen}
+        onClose={handleCloseModal}
+        title={activeProduct ? 'Edit Product Item' : 'New Product Item'}
+        description={
+          activeProduct
+            ? `Update unit price, SKU, and GST specifications for ${activeProduct.name}.`
+            : 'Add a new inventory item or service to your catalog for billing and GST calculation.'
+        }
+        maxWidth="max-w-xl"
+        position="modal"
+      >
+        <div className="pt-2">
+          <ProductForm
+            initialData={activeProduct || undefined}
+            onSubmit={handleFormSubmit}
+            onCancel={handleCloseModal}
+            isLoading={createMutation.isPending || updateMutation.isPending}
+          />
+        </div>
+      </ModalDrawer>
     </div>
   );
 }
