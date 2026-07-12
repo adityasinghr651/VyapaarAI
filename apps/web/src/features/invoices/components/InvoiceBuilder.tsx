@@ -154,7 +154,7 @@ export function InvoiceBuilder() {
       cell: (inv) => (
         <div className="flex items-center space-x-2">
           <FileText size={16} className="text-primary shrink-0" />
-          <span className="font-mono font-bold text-white tracking-wide">{inv.invoiceNumber}</span>
+          <span className="font-mono font-bold text-on-surface tracking-wide">{inv.invoiceNumber}</span>
         </div>
       ),
     },
@@ -165,8 +165,8 @@ export function InvoiceBuilder() {
         const custName = inv.customer?.name || inv.customerName || 'Unknown Customer';
         return (
           <div className="flex items-center space-x-2">
-            <User size={14} className="text-slate-500 shrink-0" />
-            <span className="font-semibold text-white">{custName}</span>
+            <User size={14} className="text-on-surface-variant/70 shrink-0" />
+            <span className="font-bold text-on-surface">{custName}</span>
           </div>
         );
       },
@@ -175,13 +175,13 @@ export function InvoiceBuilder() {
       header: 'Dates',
       accessorKey: 'issueDate',
       cell: (inv) => (
-        <div className="space-y-1 text-xs text-slate-400">
+        <div className="space-y-1 text-xs text-on-surface-variant">
           <div className="flex items-center">
-            <Calendar size={12} className="mr-1.5 text-slate-500 shrink-0" />
+            <Calendar size={12} className="mr-1.5 text-on-surface-variant/70 shrink-0" />
             <span>Issued: {new Date(inv.issueDate).toLocaleDateString()}</span>
           </div>
           {inv.dueDate && (
-            <div className="flex items-center text-slate-500">
+            <div className="flex items-center text-on-surface-variant/80">
               <Calendar size={12} className="mr-1.5 shrink-0" />
               <span>Due: {new Date(inv.dueDate).toLocaleDateString()}</span>
             </div>
@@ -194,7 +194,7 @@ export function InvoiceBuilder() {
       accessorKey: 'total',
       className: 'text-right',
       cell: (inv) => (
-        <div className="font-mono font-extrabold text-white text-right text-sm">
+        <div className="font-mono font-extrabold text-on-surface text-right text-sm">
           ₹{parseFloat(inv.total).toFixed(2)}
         </div>
       ),
@@ -210,7 +210,7 @@ export function InvoiceBuilder() {
             onChange={(e) => handleStatusChange(inv.id, e.target.value)}
             disabled={updateStatusMutation.isPending}
             aria-label={`Change status for invoice ${inv.invoiceNumber}`}
-            className="bg-slate-900 text-slate-300 border border-slate-800 rounded px-2 py-1 text-xs font-semibold focus:outline-none focus:border-primary disabled:opacity-50 cursor-pointer"
+            className="bg-surface-container-lowest text-on-surface border border-outline-variant rounded px-2 py-1 text-xs font-semibold focus:outline-none focus:border-primary disabled:opacity-50 cursor-pointer"
           >
             {Object.values(InvoiceStatus).map((s) => (
               <option key={s} value={s}>
@@ -230,7 +230,7 @@ export function InvoiceBuilder() {
             type="button"
             onClick={() => setSelectedInvoice(inv)}
             aria-label={`View summary for ${inv.invoiceNumber}`}
-            className="rounded-lg p-2 text-primary transition-colors hover:bg-slate-900 hover:text-indigo-400 active:scale-95"
+            className="rounded-lg p-2 text-primary transition-colors hover:bg-surface-container hover:text-primary/80 active:scale-95"
           >
             <Eye size={16} />
           </button>
@@ -239,7 +239,7 @@ export function InvoiceBuilder() {
             onClick={() => handleDeleteInvoice(inv)}
             disabled={deleteMutation.isPending}
             aria-label={`Delete ${inv.invoiceNumber}`}
-            className="rounded-lg p-2 text-rose-400 transition-colors hover:bg-rose-950/40 hover:text-rose-300 active:scale-95 disabled:opacity-50"
+            className="rounded-lg p-2 text-error transition-colors hover:bg-error/10 hover:text-error active:scale-95 disabled:opacity-50"
           >
             <Trash2 size={16} />
           </button>
@@ -255,9 +255,9 @@ export function InvoiceBuilder() {
         <div>
           <div className="flex items-center gap-2.5">
             <Receipt className="h-7 w-7 text-primary" />
-            <h1 className="text-3xl font-extrabold tracking-tight text-white">Invoices</h1>
+            <h1 className="text-3xl font-extrabold tracking-tight text-on-surface">Invoices</h1>
           </div>
-          <p className="text-muted-foreground text-sm mt-1">
+          <p className="text-on-surface-variant text-sm mt-1">
             Issue, manage, and audit GST-compliant invoices and customer payment lifecycle records.
           </p>
         </div>
@@ -267,7 +267,7 @@ export function InvoiceBuilder() {
             setSelectedInvoice(null);
             setIsFormOpen(true);
           }}
-          className="flex items-center justify-center space-x-2 bg-primary hover:bg-violet-600 active:scale-95 transition-all text-white font-semibold py-2.5 px-5 rounded-xl text-sm shadow-md shrink-0"
+          className="flex items-center justify-center space-x-2 bg-primary hover:bg-primary/90 active:scale-95 transition-all text-white font-semibold py-2.5 px-5 rounded-xl text-sm shadow-md shrink-0"
         >
           <Plus size={16} />
           <span>Create Invoice</span>
@@ -332,33 +332,33 @@ export function InvoiceBuilder() {
         {selectedInvoice && (
           <div className="space-y-6 pt-2">
             {/* Customer & Status Header */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 rounded-xl bg-slate-950/40 p-4 border border-slate-900">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 rounded-xl bg-surface-container-low p-4 border border-outline-variant">
               <div>
-                <p className="text-xs text-slate-500 font-bold uppercase tracking-wider mb-1">
+                <p className="text-xs text-on-surface-variant font-bold uppercase tracking-wider mb-1">
                   Billed To
                 </p>
-                <p className="font-semibold text-white text-base">
+                <p className="font-bold text-on-surface text-base">
                   {selectedInvoice.customer?.name || selectedInvoice.customerName || 'Customer'}
                 </p>
                 {selectedInvoice.customer?.email && (
-                  <p className="text-xs text-slate-400 mt-0.5">{selectedInvoice.customer.email}</p>
+                  <p className="text-xs text-on-surface-variant mt-0.5">{selectedInvoice.customer.email}</p>
                 )}
                 {selectedInvoice.customer?.gstin && (
-                  <p className="font-mono text-xs text-emerald-400 mt-1">
+                  <p className="font-mono text-xs text-green-700 font-semibold mt-1">
                     GSTIN: {selectedInvoice.customer.gstin}
                   </p>
                 )}
               </div>
               <div className="sm:text-right flex flex-col sm:items-end justify-between">
                 <div>
-                  <p className="text-xs text-slate-500 font-bold uppercase tracking-wider mb-1">
+                  <p className="text-xs text-on-surface-variant font-bold uppercase tracking-wider mb-1">
                     Dates & Status
                   </p>
-                  <p className="text-xs text-slate-300">
+                  <p className="text-xs text-on-surface">
                     Issued: {new Date(selectedInvoice.issueDate).toLocaleDateString()}
                   </p>
                   {selectedInvoice.dueDate && (
-                    <p className="text-xs text-slate-400 mt-0.5">
+                    <p className="text-xs text-on-surface-variant mt-0.5">
                       Due: {new Date(selectedInvoice.dueDate).toLocaleDateString()}
                     </p>
                   )}
@@ -371,25 +371,25 @@ export function InvoiceBuilder() {
 
             {/* Line Items Table */}
             <div className="space-y-3">
-              <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+              <h4 className="text-xs font-bold text-on-surface-variant uppercase tracking-wider">
                 Billed Line Items ({selectedInvoice.items?.length || 0})
               </h4>
-              <div className="divide-y divide-slate-900 border border-slate-900 rounded-xl overflow-hidden bg-slate-950/20">
+              <div className="divide-y divide-outline-variant border border-outline-variant rounded-xl overflow-hidden bg-surface-container-lowest">
                 {selectedInvoice.items?.map((item, idx) => {
                   const itemName = item.productName || item.product?.name || `Product #${item.productId}`;
                   return (
                     <div key={idx} className="p-3.5 flex justify-between items-center text-sm">
                       <div>
-                        <div className="font-semibold text-white">{itemName}</div>
-                        <div className="text-slate-500 text-xs mt-0.5">
+                        <div className="font-bold text-on-surface">{itemName}</div>
+                        <div className="text-on-surface-variant text-xs mt-0.5">
                           Quantity: {item.quantity} × ₹{parseFloat(item.price).toFixed(2)}
                         </div>
                       </div>
                       <div className="font-mono text-right">
-                        <div className="font-bold text-slate-200">
+                        <div className="font-bold text-on-surface">
                           ₹{parseFloat(item.total).toFixed(2)}
                         </div>
-                        <div className="text-[11px] text-slate-500 mt-0.5">
+                        <div className="text-[11px] text-on-surface-variant mt-0.5">
                           incl. {parseFloat(item.gstRate).toFixed(0)}% GST (₹{parseFloat(item.gstAmount).toFixed(2)})
                         </div>
                       </div>
@@ -397,7 +397,7 @@ export function InvoiceBuilder() {
                   );
                 })}
                 {(!selectedInvoice.items || selectedInvoice.items.length === 0) && (
-                  <div className="p-4 text-center text-xs text-slate-500 italic">
+                  <div className="p-4 text-center text-xs text-on-surface-variant/70 italic">
                     No line item details available for this invoice record.
                   </div>
                 )}
@@ -405,16 +405,16 @@ export function InvoiceBuilder() {
             </div>
 
             {/* Financial Summary */}
-            <div className="flex flex-col items-end space-y-2 text-sm rounded-xl bg-slate-950/60 p-4 border border-slate-900">
-              <div className="flex justify-between w-full sm:w-72 text-slate-400">
+            <div className="flex flex-col items-end space-y-2 text-sm rounded-xl bg-surface-container p-4 border border-outline-variant">
+              <div className="flex justify-between w-full sm:w-72 text-on-surface-variant">
                 <span>Subtotal (Excl. GST):</span>
-                <span className="font-mono text-slate-300">₹{parseFloat(selectedInvoice.subtotal).toFixed(2)}</span>
+                <span className="font-mono font-semibold text-on-surface">₹{parseFloat(selectedInvoice.subtotal).toFixed(2)}</span>
               </div>
-              <div className="flex justify-between w-full sm:w-72 text-slate-400">
+              <div className="flex justify-between w-full sm:w-72 text-on-surface-variant">
                 <span>Total GST Amount:</span>
-                <span className="font-mono text-slate-300">₹{parseFloat(selectedInvoice.gstAmount).toFixed(2)}</span>
+                <span className="font-mono font-semibold text-on-surface">₹{parseFloat(selectedInvoice.gstAmount).toFixed(2)}</span>
               </div>
-              <div className="flex justify-between w-full sm:w-72 text-white font-extrabold text-base border-t border-slate-900 pt-3 mt-1">
+              <div className="flex justify-between w-full sm:w-72 text-on-surface font-extrabold text-base border-t border-outline-variant pt-3 mt-1">
                 <span className="flex items-center gap-1">
                   <IndianRupee size={16} className="text-primary" /> Grand Total:
                 </span>

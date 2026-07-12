@@ -56,7 +56,7 @@ export function ModalDrawer({
   const isDrawer = position === 'drawer-right' || position === 'drawer-left';
 
   return (
-    <div className="fixed inset-0 z-50 flex overflow-hidden bg-slate-950/80 backdrop-blur-sm animate-in fade-in-0 duration-200">
+    <div className="fixed inset-0 z-50 flex overflow-hidden bg-on-surface/40 backdrop-blur-xs animate-in fade-in-0 duration-200">
       {/* Backdrop click dismiss */}
       <div
         className="absolute inset-0"
@@ -70,7 +70,7 @@ export function ModalDrawer({
         aria-modal="true"
         className={twMerge(
           clsx(
-            'relative z-10 flex flex-col bg-slate-950 border border-slate-900 shadow-2xl transition-all',
+            'relative z-10 flex flex-col bg-surface-container-lowest border border-outline-variant shadow-2xl transition-all text-on-surface',
             isDrawer
               ? clsx(
                   'h-full w-full max-w-md',
@@ -88,15 +88,15 @@ export function ModalDrawer({
       >
         {/* Header */}
         {(title || description) && (
-          <div className="flex items-start justify-between border-b border-slate-900 p-6">
+          <div className="flex items-start justify-between border-b border-outline-variant p-6 bg-surface-container-low/50">
             <div className="space-y-1">
-              {title && <h2 className="text-lg font-bold tracking-tight text-white">{title}</h2>}
-              {description && <p className="text-xs text-slate-400">{description}</p>}
+              {title && <h2 className="text-lg font-bold tracking-tight text-on-surface">{title}</h2>}
+              {description && <p className="text-xs text-on-surface-variant">{description}</p>}
             </div>
             <button
               type="button"
               onClick={onClose}
-              className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-900 hover:text-white"
+              className="rounded-lg p-1.5 text-on-surface-variant transition-colors hover:bg-surface-container hover:text-on-surface"
               aria-label="Close dialog"
             >
               <X size={18} />
@@ -105,11 +105,11 @@ export function ModalDrawer({
         )}
 
         {/* Body */}
-        <div className="flex-1 overflow-y-auto p-6">{children}</div>
+        <div className="flex-1 overflow-y-auto p-6 bg-surface-container-lowest">{children}</div>
 
         {/* Footer */}
         {footer && (
-          <div className="flex items-center justify-end space-x-3 border-t border-slate-900 bg-slate-950/60 p-4 px-6">
+          <div className="flex items-center justify-end space-x-3 border-t border-outline-variant bg-surface-container-low p-4 px-6">
             {footer}
           </div>
         )}

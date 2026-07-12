@@ -141,7 +141,7 @@ export function ProductForm({
         <div className="flex flex-col space-y-1.5">
           <label
             htmlFor="product-gst-rate"
-            className="block text-xs font-semibold uppercase tracking-wider text-slate-300"
+            className="block text-xs font-bold uppercase tracking-wider text-on-surface-variant"
           >
             GST Slab Rate (%) *
           </label>
@@ -155,18 +155,18 @@ export function ProductForm({
               }
             }}
             className={clsx(
-              'glass-input w-full rounded-lg p-2.5 text-sm text-white focus:outline-none transition-all border-slate-800/80 hover:border-slate-700',
-              validationErrors.gstRate && 'border-rose-500/80 focus:border-rose-500'
+              'w-full rounded-lg bg-surface-container-lowest border border-outline-variant p-2.5 text-sm text-on-surface focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all hover:border-outline-variant/80',
+              validationErrors.gstRate && 'border-error focus:border-error focus:ring-error/20'
             )}
           >
             {GST_SLABS.map((slab) => (
-              <option key={slab} value={slab} className="bg-slate-900 text-white">
+              <option key={slab} value={slab} className="bg-surface-container-lowest text-on-surface">
                 {slab}% GST
               </option>
             ))}
           </select>
           {validationErrors.gstRate && (
-            <p role="alert" className="text-xs font-medium text-rose-400">
+            <p role="alert" className="text-xs font-semibold text-error">
               {validationErrors.gstRate}
             </p>
           )}
@@ -176,7 +176,7 @@ export function ProductForm({
       <div className="flex flex-col space-y-1.5">
         <label
           htmlFor="product-description"
-          className="block text-xs font-semibold uppercase tracking-wider text-slate-300"
+          className="block text-xs font-bold uppercase tracking-wider text-on-surface-variant"
         >
           Product Description
         </label>
@@ -184,18 +184,18 @@ export function ProductForm({
           id="product-description"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          className="glass-input h-20 w-full rounded-lg p-2.5 text-sm text-white placeholder:text-slate-500 focus:outline-none transition-all border-slate-800/80 hover:border-slate-700"
+          className="h-20 w-full rounded-lg bg-surface-container-lowest border border-outline-variant p-2.5 text-sm text-on-surface placeholder:text-on-surface-variant/60 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all hover:border-outline-variant/80"
           placeholder="Detailed specification or billing note for invoices..."
         />
       </div>
 
-      <div className="flex items-center justify-end space-x-3 border-t border-slate-900/80 pt-4">
+      <div className="flex items-center justify-end space-x-3 border-t border-outline-variant pt-4">
         {onCancel && (
           <button
             type="button"
             onClick={onCancel}
             disabled={isLoading}
-            className="rounded-lg px-4 py-2 text-xs font-semibold text-slate-400 transition-colors hover:bg-slate-900 hover:text-white disabled:opacity-50"
+            className="rounded-lg px-4 py-2 text-xs font-semibold text-on-surface-variant transition-colors hover:bg-surface-container hover:text-on-surface disabled:opacity-50"
           >
             Cancel
           </button>
@@ -203,7 +203,7 @@ export function ProductForm({
         <button
           type="submit"
           disabled={isLoading}
-          className="rounded-lg bg-primary px-5 py-2 text-xs font-semibold text-white shadow-md transition-all hover:bg-violet-600 active:scale-95 disabled:opacity-50"
+          className="rounded-lg bg-primary px-5 py-2 text-xs font-semibold text-white shadow-md transition-all hover:bg-primary/90 active:scale-95 disabled:opacity-50"
         >
           {isLoading ? 'Saving...' : initialData?.id ? 'Update Product' : 'Create Product'}
         </button>

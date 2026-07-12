@@ -35,25 +35,25 @@ export function DataTable<T>({
   emptyState,
 }: DataTableProps<T>) {
   return (
-    <div className={twMerge(clsx('glass-panel rounded-xl overflow-hidden border border-slate-900', className))}>
+    <div className={twMerge(clsx('bg-surface-container-lowest rounded-xl overflow-hidden border border-outline-variant shadow-sm', className))}>
       {isLoading ? (
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="border-b border-slate-900 bg-slate-950/40 text-xs font-semibold text-slate-400 uppercase tracking-wider">
+              <tr className="border-b border-outline-variant bg-surface-container-low text-xs font-bold text-on-surface-variant uppercase tracking-wider">
                 {columns.map((col, idx) => (
-                  <th key={idx} className={clsx('p-4 font-semibold', col.className)}>
+                  <th key={idx} className={clsx('p-4 font-bold', col.className)}>
                     {col.header}
                   </th>
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-900 text-sm">
+            <tbody className="divide-y divide-outline-variant text-sm">
               {Array.from({ length: 6 }).map((_, rowIdx) => (
                 <tr key={`skeleton-${rowIdx}`} className="animate-pulse">
                   {columns.map((col, colIdx) => (
                     <td key={colIdx} className={clsx('p-4', col.className)}>
-                      <div className="h-4 w-3/4 rounded bg-slate-900/80" />
+                      <div className="h-4 w-3/4 rounded bg-surface-variant" />
                     </td>
                   ))}
                 </tr>
@@ -77,15 +77,15 @@ export function DataTable<T>({
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="border-b border-slate-900 bg-slate-950/40 text-xs font-semibold text-slate-400 uppercase tracking-wider">
+              <tr className="border-b border-outline-variant bg-surface-container-low text-xs font-bold text-on-surface-variant uppercase tracking-wider">
                 {columns.map((col, idx) => (
-                  <th key={idx} className={clsx('p-4 font-semibold', col.className)}>
+                  <th key={idx} className={clsx('p-4 font-bold', col.className)}>
                     {col.header}
                   </th>
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-900 text-sm">
+            <tbody className="divide-y divide-outline-variant text-sm">
               {data.map((item, rowIdx) => {
                 const rowKey = keyExtractor(item, rowIdx);
                 return (
@@ -93,8 +93,8 @@ export function DataTable<T>({
                     key={rowKey}
                     onClick={() => onRowClick && onRowClick(item)}
                     className={clsx(
-                      'transition-all',
-                      onRowClick ? 'cursor-pointer hover:bg-slate-900/40' : 'hover:bg-slate-900/20'
+                      'transition-colors h-[48px]',
+                      onRowClick ? 'cursor-pointer hover:bg-surface-container-low' : 'hover:bg-surface-bright'
                     )}
                   >
                     {columns.map((col, colIdx) => {
@@ -106,7 +106,7 @@ export function DataTable<T>({
                         cellContent = val !== undefined && val !== null ? String(val) : '';
                       }
                       return (
-                        <td key={colIdx} className={clsx('p-4 text-slate-200', col.className)}>
+                        <td key={colIdx} className={clsx('p-4 text-on-surface font-medium', col.className)}>
                           {cellContent}
                         </td>
                       );

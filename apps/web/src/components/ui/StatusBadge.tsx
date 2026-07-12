@@ -21,24 +21,24 @@ export interface StatusBadgeProps extends React.HTMLAttributes<HTMLSpanElement> 
 
 const variantStyles: Record<StatusBadgeVariant, { container: string; indicator: string }> = {
   success: {
-    container: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
-    indicator: 'bg-emerald-400',
+    container: 'bg-green-50 text-green-700 border-green-200',
+    indicator: 'bg-green-600',
   },
   warning: {
-    container: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
-    indicator: 'bg-amber-400',
+    container: 'bg-amber-50 text-amber-700 border-amber-200',
+    indicator: 'bg-amber-600',
   },
   danger: {
-    container: 'bg-rose-500/10 text-rose-400 border-rose-500/20',
-    indicator: 'bg-rose-400',
+    container: 'bg-error-container text-error border-error/20',
+    indicator: 'bg-error',
   },
   info: {
-    container: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
-    indicator: 'bg-blue-400',
+    container: 'bg-primary/10 text-primary border-primary/20',
+    indicator: 'bg-primary',
   },
   neutral: {
-    container: 'bg-slate-500/10 text-slate-400 border-slate-500/20',
-    indicator: 'bg-slate-400',
+    container: 'bg-surface-container text-on-surface-variant border-outline-variant',
+    indicator: 'bg-on-surface-variant',
   },
 };
 

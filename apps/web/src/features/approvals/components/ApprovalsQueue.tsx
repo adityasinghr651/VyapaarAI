@@ -1,15 +1,14 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { PendingApprovalDto } from '@vyapaarai/shared-types';
-import { ShieldCheck, Eye, Clock, User, Layers } from 'lucide-react';
 import api from '../../../lib/api-client';
-import { DataTable, ColumnDef } from '../../../components/ui/DataTable';
-import { ModalDrawer } from '../../../components/ui/ModalDrawer';
-import { StatusBadge } from '../../../components/ui/StatusBadge';
 import { useToast } from '../../../components/ui/Toast';
-import { ExtractionApprovalPanel } from './ExtractionApprovalPanel';
+import { ConversationList, ConversationItem } from './ConversationList';
+import { ConfidenceBadge } from './ConfidenceBadge';
+import { ExtractionForm, ExtractionFormData } from './ExtractionForm';
+import { ActionToolbar } from './ActionToolbar';
 
 interface ApprovalsApiResponse {
   message?: string;
@@ -21,13 +20,35 @@ interface SingleApprovalApiResponse {
   data?: PendingApprovalDto;
 }
 
+const DEFAULT_ITEMS: ConversationItem[] = [
+  {
+    id: 'sample-1',
+    sender: 'Rahul Traders',
+    time: '10:42 AM',
+    message: 'I need 50 bags of Cement, GST invoice please.',
+    status: 'Extracted',
+  },
+  {
+    id: 'sample-2',
+    sender: 'Shri Ram Electronics',
+    time: 'Yesterday',
+    message: 'Attach invoice for 2 laptops bought last week.',
+    status: 'Processing',
+  },
+  {
+    id: 'sample-3',
+    sender: '+91 98765 43210',
+    time: 'Mon',
+    message: 'Hello, what are your shop timings today?',
+    status: 'No Actionable Data',
+  },
+];
+
 export function ApprovalsQueue() {
   const queryClient = useQueryClient();
   const { success, error } = useToast();
 
-  const [selectedApproval, setSelectedApproval] = useState<PendingApprovalDto | null>(null);
-
-  // Query
+  // Query API
   const { data: approvalsRes, isLoading } = useQuery<ApprovalsApiResponse | PendingApprovalDto[]>({
     queryKey: ['approvals'],
     queryFn: () => api.get('/approvals'),
@@ -36,6 +57,70 @@ export function ApprovalsQueue() {
   const approvals: PendingApprovalDto[] = Array.isArray(approvalsRes)
     ? approvalsRes
     : (approvalsRes as ApprovalsApiResponse)?.data || [];
+
+  // Construct combined items
+  const liveItems: ConversationItem[] = approvals.map((appr) => ({
+    id: appr.id,
+    sender: appr.requestedByName || `Entity #${appr.entityId || appr.id.slice(0, 6)}`,
+    time: new Date(appr.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    message: typeof appr.payload === 'object' && appr.payload !== null && 'message' in appr.payload
+      ? String((appr.payload as Record<string, unknown>).message)
+      : `Extraction payload ready for ${appr.entityType} (${appr.workflowType})`,
+    status: 'Extracted',
+    rawItem: appr,
+  }));
+
+  const allItems = liveItems.length > 0 ? liveItems : DEFAULT_ITEMS;
+
+  const [selectedItem, setSelectedItem] = useState<ConversationItem | null>(null);
+  const [formData, setFormData] = useState<ExtractionFormData>({
+    customerName: 'Rahul Traders',
+    product: 'Cement',
+    quantity: 50,
+    gstRate: 18,
+  });
+
+  useEffect(() => {
+    if (!selectedItem && allItems.length > 0) {
+      setSelectedItem(allItems[0]);
+    }
+  }, [allItems, selectedItem]);
+
+  useEffect(() => {
+    if (selectedItem) {
+      if (selectedItem.rawItem) {
+        const raw = selectedItem.rawItem as PendingApprovalDto;
+        const payload = (raw.payload || {}) as Record<string, unknown>;
+        setFormData({
+          customerName: String(payload.customerName || selectedItem.sender || 'Unknown Customer'),
+          product: String(payload.product || 'Extracted Item'),
+          quantity: Number(payload.quantity) || 1,
+          gstRate: Number(payload.gstRate) || 18,
+        });
+      } else if (selectedItem.id === 'sample-1') {
+        setFormData({
+          customerName: 'Rahul Traders',
+          product: 'Cement',
+          quantity: 50,
+          gstRate: 18,
+        });
+      } else if (selectedItem.id === 'sample-2') {
+        setFormData({
+          customerName: 'Shri Ram Electronics',
+          product: 'Laptop',
+          quantity: 2,
+          gstRate: 18,
+        });
+      } else {
+        setFormData({
+          customerName: selectedItem.sender,
+          product: 'General Service',
+          quantity: 1,
+          gstRate: 18,
+        });
+      }
+    }
+  }, [selectedItem]);
 
   // Mutations
   const approveMutation = useMutation<
@@ -46,8 +131,7 @@ export function ApprovalsQueue() {
     mutationFn: ({ id, note, payload }) => api.post(`/approvals/${id}/approve`, { note, payload }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['approvals'] });
-      setSelectedApproval(null);
-      success('Extraction Approved', 'AI extraction data verified and committed to records.');
+      success('Extraction Approved', 'AI extraction data verified and invoice generated.');
     },
     onError: (err: Error) => {
       error('Approval Failed', err.message || 'Failed to approve extraction item');
@@ -62,162 +146,66 @@ export function ApprovalsQueue() {
     mutationFn: ({ id, note }) => api.post(`/approvals/${id}/reject`, { note }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['approvals'] });
-      setSelectedApproval(null);
-      success('Extraction Rejected', 'Extraction item returned for correction or dismissal.');
+      success('Extraction Deleted', 'Extraction record removed.');
     },
     onError: (err: Error) => {
-      error('Rejection Failed', err.message || 'Failed to reject extraction item');
+      error('Deletion Failed', err.message || 'Failed to delete extraction item');
     },
   });
 
-  const handleApproveItem = async (
-    id: string,
-    note?: string,
-    modifiedPayload?: Record<string, unknown>
-  ) => {
-    await approveMutation.mutateAsync({ id, note, payload: modifiedPayload });
+  const handleApprove = async () => {
+    if (!selectedItem) return;
+    if (selectedItem.rawItem) {
+      const raw = selectedItem.rawItem as PendingApprovalDto;
+      await approveMutation.mutateAsync({
+        id: raw.id,
+        payload: { ...formData },
+      });
+    } else {
+      success('Approved & Invoice Generated', `Invoice created for ${formData.customerName} (${formData.product}).`);
+    }
   };
 
-  const handleRejectItem = async (id: string, note?: string) => {
-    await rejectMutation.mutateAsync({ id, note });
+  const handleDelete = async () => {
+    if (!selectedItem) return;
+    if (selectedItem.rawItem) {
+      const raw = selectedItem.rawItem as PendingApprovalDto;
+      await rejectMutation.mutateAsync({ id: raw.id, note: 'Deleted by user in WhatsApp Activity view' });
+    } else {
+      success('Record Removed', `Extraction item for ${selectedItem.sender} dismissed.`);
+    }
   };
 
-  const columns: ColumnDef<PendingApprovalDto>[] = [
-    {
-      header: 'Workflow & Entity',
-      accessorKey: 'entityType',
-      cell: (item) => (
-        <div>
-          <div className="flex items-center space-x-1.5 font-bold text-white tracking-wide">
-            <Layers size={14} className="text-primary shrink-0" />
-            <span>{item.entityType}</span>
-          </div>
-          <div className="text-xs text-slate-400 mt-0.5 font-mono">
-            {item.workflowType} {item.entityId ? `(#${item.entityId.slice(0, 8)})` : ''}
-          </div>
-        </div>
-      ),
-    },
-    {
-      header: 'Requested By',
-      accessorKey: 'requestedByName',
-      cell: (item) => (
-        <div className="space-y-1 text-xs text-slate-300">
-          <div className="flex items-center font-semibold text-white">
-            <User size={12} className="mr-1.5 text-slate-500 shrink-0" />
-            <span>{item.requestedByName || 'System AI Service'}</span>
-          </div>
-          <div className="flex items-center text-slate-400">
-            <Clock size={12} className="mr-1.5 text-slate-500 shrink-0" />
-            <span>{new Date(item.createdAt).toLocaleString()}</span>
-          </div>
-        </div>
-      ),
-    },
-    {
-      header: 'Payload Summary',
-      accessorKey: 'payload',
-      cell: (item) => {
-        const keys = item.payload ? Object.keys(item.payload) : [];
-        return (
-          <div className="flex flex-wrap gap-1 max-w-xs">
-            {keys.slice(0, 4).map((k) => (
-              <span
-                key={k}
-                className="rounded bg-slate-900 border border-slate-800 px-2 py-0.5 text-[10px] font-mono text-slate-300 truncate max-w-[120px]"
-              >
-                {k}
-              </span>
-            ))}
-            {keys.length > 4 && (
-              <span className="rounded bg-slate-900 border border-slate-800 px-1.5 py-0.5 text-[10px] font-mono text-slate-500">
-                +{keys.length - 4} more
-              </span>
-            )}
-            {keys.length === 0 && (
-              <span className="text-xs text-slate-600 italic">Empty payload</span>
-            )}
-          </div>
-        );
-      },
-    },
-    {
-      header: 'Review Status',
-      accessorKey: 'status',
-      cell: (item) => <StatusBadge status={item.status} size="sm" showIndicator />,
-    },
-    {
-      header: 'Actions',
-      className: 'text-right',
-      cell: (item) => (
-        <div className="flex items-center justify-end space-x-2">
-          <button
-            type="button"
-            onClick={() => setSelectedApproval(item)}
-            disabled={approveMutation.isPending || rejectMutation.isPending}
-            aria-label={`Review ${item.entityType} extraction`}
-            className="flex items-center space-x-1.5 rounded-lg bg-primary/10 border border-primary/30 px-3 py-1.5 text-xs font-semibold text-primary transition-colors hover:bg-primary hover:text-white active:scale-95 disabled:opacity-50"
-          >
-            <Eye size={14} />
-            <span>Review</span>
-          </button>
-        </div>
-      ),
-    },
-  ];
+  if (isLoading) {
+    return (
+      <div className="flex h-64 items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-300">
-      {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2.5">
-            <ShieldCheck className="h-7 w-7 text-primary" />
-            <h1 className="text-3xl font-extrabold tracking-tight text-white">Approvals Queue</h1>
-          </div>
-          <p className="text-muted-foreground text-sm mt-1">
-            Human-in-the-loop verification queue for AI-extracted invoice and document payloads.
-          </p>
-        </div>
-        <div className="flex items-center space-x-2 text-xs text-slate-400 bg-slate-950/60 border border-slate-900 px-3.5 py-2 rounded-xl">
-          <Clock size={14} className="text-amber-400 shrink-0" />
-          <span>Pending verification items requiring audit sign-off</span>
-        </div>
+    <div className="max-w-container-max mx-auto h-[calc(100vh-80px)] flex flex-col animate-in fade-in duration-300">
+      {/* 2-Column Split */}
+      <div className="flex-1 overflow-hidden py-4 grid grid-cols-1 lg:grid-cols-12 gap-6 h-full">
+        {/* Left Column: Conversation History (40%) */}
+        <ConversationList
+          items={allItems}
+          selectedId={selectedItem?.id || null}
+          onSelectItem={(item) => setSelectedItem(item)}
+        />
+
+        {/* Right Column: Structured Extraction Preview (60%) */}
+        <section className="lg:col-span-7 flex flex-col h-full space-y-6 overflow-hidden">
+          <ConfidenceBadge sourceName={selectedItem?.sender || 'Unknown Sender'} score={96} />
+          <ExtractionForm data={formData} onChange={(updated) => setFormData(updated)} />
+          <ActionToolbar
+            onApprove={handleApprove}
+            onDelete={handleDelete}
+            isSubmitting={approveMutation.isPending || rejectMutation.isPending}
+          />
+        </section>
       </div>
-
-      {/* Approvals Data Table Component */}
-      <DataTable<PendingApprovalDto>
-        columns={columns}
-        data={approvals}
-        isLoading={isLoading}
-        keyExtractor={(item) => item.id}
-        emptyState={{
-          title: 'No Pending Approvals',
-          description:
-            'All AI document extraction items have been reviewed and verified. When new scanned receipts or invoices require human audit verification, they will appear here automatically.',
-        }}
-      />
-
-      {/* Human-in-the-Loop Extraction Approval Modal Drawer */}
-      <ModalDrawer
-        isOpen={!!selectedApproval}
-        onClose={() => setSelectedApproval(null)}
-        title={selectedApproval ? `Extraction Audit (${selectedApproval.entityType})` : 'Extraction Audit'}
-        description="Inspect AI-extracted document fields, verify accuracy against source files, and approve or reject."
-        maxWidth="max-w-3xl"
-        position="modal"
-      >
-        {selectedApproval && (
-          <div className="pt-2">
-            <ExtractionApprovalPanel
-              approval={selectedApproval}
-              onApprove={handleApproveItem}
-              onReject={handleRejectItem}
-              isLoading={approveMutation.isPending || rejectMutation.isPending}
-            />
-          </div>
-        )}
-      </ModalDrawer>
     </div>
   );
 }

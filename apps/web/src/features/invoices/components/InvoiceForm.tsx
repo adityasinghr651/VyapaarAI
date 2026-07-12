@@ -215,16 +215,16 @@ export function InvoiceForm({
       noValidate
     >
       {/* Top Details Header */}
-      <GlassCard className="p-5 border-slate-900 space-y-4">
-        <div className="flex items-center justify-between border-b border-slate-900/80 pb-3">
+      <GlassCard className="p-5 border-outline-variant space-y-4">
+        <div className="flex items-center justify-between border-b border-outline-variant pb-3">
           <div className="flex items-center gap-2">
             <Receipt className="text-primary h-5 w-5" />
-            <h3 className="text-sm font-bold uppercase tracking-wider text-white">
+            <h3 className="text-sm font-bold uppercase tracking-wider text-on-surface">
               Billing Information
             </h3>
           </div>
           {selectedCustomer?.gstin && (
-            <span className="rounded bg-emerald-950/40 border border-emerald-500/30 px-2.5 py-1 text-[11px] font-mono text-emerald-300">
+            <span className="rounded bg-green-50 border border-green-200 px-2.5 py-1 text-[11px] font-mono text-green-700 font-semibold">
               Customer GSTIN: {selectedCustomer.gstin}
             </span>
           )}
@@ -235,7 +235,7 @@ export function InvoiceForm({
           <div className="flex flex-col space-y-1.5">
             <label
               htmlFor="invoice-customer-select"
-              className="block text-xs font-semibold uppercase tracking-wider text-slate-300"
+              className="block text-xs font-bold uppercase tracking-wider text-on-surface-variant"
             >
               Select Customer *
             </label>
@@ -251,21 +251,21 @@ export function InvoiceForm({
               aria-invalid={Boolean(validationErrors.customerId)}
               aria-describedby={validationErrors.customerId ? 'invoice-customer-error' : undefined}
               className={clsx(
-                'glass-input w-full rounded-lg p-2.5 text-sm text-white focus:outline-none transition-all border-slate-800/80 hover:border-slate-700',
-                validationErrors.customerId && 'border-rose-500/80 focus:border-rose-500'
+                'w-full rounded-lg bg-surface-container-lowest border border-outline-variant p-2.5 text-sm text-on-surface focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all hover:border-outline-variant/80',
+                validationErrors.customerId && 'border-error focus:border-error focus:ring-error/20'
               )}
             >
-              <option value="" className="bg-slate-900 text-slate-400">
+              <option value="" className="bg-surface-container-lowest text-on-surface-variant">
                 -- Choose a registered customer --
               </option>
               {customers.map((c) => (
-                <option key={c.id} value={c.id} className="bg-slate-900 text-white">
+                <option key={c.id} value={c.id} className="bg-surface-container-lowest text-on-surface">
                   {c.name} {c.gstin ? `(${c.gstin})` : ''}
                 </option>
               ))}
             </select>
             {validationErrors.customerId && (
-              <p id="invoice-customer-error" role="alert" className="text-xs font-medium text-rose-400">
+              <p id="invoice-customer-error" role="alert" className="text-xs font-semibold text-error">
                 {validationErrors.customerId}
               </p>
             )}
@@ -282,19 +282,19 @@ export function InvoiceForm({
       </GlassCard>
 
       {/* Line Items Section */}
-      <GlassCard className="p-5 border-slate-900 space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-900/80 pb-3">
+      <GlassCard className="p-5 border-outline-variant space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-outline-variant pb-3">
           <div>
-            <h3 className="text-sm font-bold uppercase tracking-wider text-white">
+            <h3 className="text-sm font-bold uppercase tracking-wider text-on-surface">
               Invoice Line Items
             </h3>
-            <p className="text-xs text-slate-400">Add products and adjust quantities for billing.</p>
+            <p className="text-xs text-on-surface-variant">Add products and adjust quantities for billing.</p>
           </div>
           <button
             type="button"
             onClick={handleAddItem}
             disabled={isLoading}
-            className="flex items-center gap-1.5 self-start sm:self-auto rounded-lg bg-slate-900 border border-slate-800 px-3 py-1.5 text-xs font-semibold text-slate-200 transition-all hover:bg-slate-800 hover:text-white active:scale-95 disabled:opacity-50"
+            className="flex items-center gap-1.5 self-start sm:self-auto rounded-lg bg-surface-container border border-outline-variant px-3 py-1.5 text-xs font-semibold text-on-surface transition-all hover:bg-surface-container-high active:scale-95 disabled:opacity-50"
           >
             <Plus size={14} className="text-primary" />
             <span>Add Line Item</span>
@@ -302,8 +302,8 @@ export function InvoiceForm({
         </div>
 
         {validationErrors.items && (
-          <div className="rounded-lg bg-rose-950/30 border border-rose-500/30 p-3 text-xs text-rose-300 flex items-center gap-2">
-            <AlertCircle size={16} className="text-rose-400 shrink-0" />
+          <div className="rounded-lg bg-error-container border border-error/30 p-3 text-xs text-error flex items-center gap-2">
+            <AlertCircle size={16} className="text-error shrink-0" />
             <span>{validationErrors.items}</span>
           </div>
         )}
@@ -317,7 +317,7 @@ export function InvoiceForm({
                 type="button"
                 onClick={handleAddItem}
                 disabled={isLoading}
-                className="mt-2 flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-white shadow transition-all hover:bg-violet-600 active:scale-95 disabled:opacity-50"
+                className="mt-2 flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-white shadow transition-all hover:bg-primary/90 active:scale-95 disabled:opacity-50"
               >
                 <Plus size={14} />
                 <span>Add Line Item</span>
@@ -335,23 +335,23 @@ export function InvoiceForm({
               return (
                 <div
                   key={item.key}
-                  className="grid grid-cols-1 md:grid-cols-12 gap-3 rounded-xl bg-slate-950/40 p-3.5 border border-slate-900/80 items-start md:items-center transition-all hover:border-slate-800"
+                  className="grid grid-cols-1 md:grid-cols-12 gap-3 rounded-xl bg-surface-container-low p-3.5 border border-outline-variant items-start md:items-center transition-all hover:border-outline-variant/80"
                 >
                   {/* Product Dropdown */}
                   <div className="md:col-span-5 flex flex-col space-y-1">
-                    <label className="block md:hidden text-[10px] font-bold uppercase text-slate-400">
+                    <label className="block md:hidden text-[10px] font-bold uppercase text-on-surface-variant">
                       Product / Item
                     </label>
                     <select
                       value={item.productId}
                       onChange={(e) => handleItemChange(idx, 'productId', e.target.value)}
-                      className="glass-input w-full rounded-lg p-2 text-xs text-white focus:outline-none border-slate-800/80"
+                      className="w-full rounded-lg bg-surface-container-lowest border border-outline-variant p-2 text-xs text-on-surface focus:border-primary focus:outline-none"
                     >
-                      <option value="" className="bg-slate-900 text-slate-400">
+                      <option value="" className="bg-surface-container-lowest text-on-surface-variant">
                         -- Select Product --
                       </option>
                       {products.map((p) => (
-                        <option key={p.id} value={p.id} className="bg-slate-900 text-white">
+                        <option key={p.id} value={p.id} className="bg-surface-container-lowest text-on-surface">
                           {p.name} (₹{parseFloat(p.price).toFixed(2)} - {p.gstRate}% GST)
                         </option>
                       ))}
@@ -360,7 +360,7 @@ export function InvoiceForm({
 
                   {/* Quantity */}
                   <div className="md:col-span-2 flex flex-col space-y-1">
-                    <label className="block md:hidden text-[10px] font-bold uppercase text-slate-400">
+                    <label className="block md:hidden text-[10px] font-bold uppercase text-on-surface-variant">
                       Qty
                     </label>
                     <input
@@ -368,13 +368,13 @@ export function InvoiceForm({
                       min="1"
                       value={item.quantity}
                       onChange={(e) => handleItemChange(idx, 'quantity', e.target.value)}
-                      className="glass-input w-full rounded-lg p-2 text-xs text-white font-mono focus:outline-none border-slate-800/80"
+                      className="w-full rounded-lg bg-surface-container-lowest border border-outline-variant p-2 text-xs text-on-surface font-mono focus:border-primary focus:outline-none"
                     />
                   </div>
 
                   {/* Unit Price Override */}
                   <div className="md:col-span-2 flex flex-col space-y-1">
-                    <label className="block md:hidden text-[10px] font-bold uppercase text-slate-400">
+                    <label className="block md:hidden text-[10px] font-bold uppercase text-on-surface-variant">
                       Unit Price (₹)
                     </label>
                     <input
@@ -384,14 +384,14 @@ export function InvoiceForm({
                       placeholder={selectedProduct ? selectedProduct.price : '0.00'}
                       value={item.unitPrice ?? ''}
                       onChange={(e) => handleItemChange(idx, 'unitPrice', e.target.value)}
-                      className="glass-input w-full rounded-lg p-2 text-xs text-white font-mono focus:outline-none border-slate-800/80 placeholder:text-slate-600"
+                      className="w-full rounded-lg bg-surface-container-lowest border border-outline-variant p-2 text-xs text-on-surface font-mono focus:border-primary focus:outline-none placeholder:text-on-surface-variant/60"
                     />
                   </div>
 
                   {/* Line Total Summary */}
                   <div className="md:col-span-2 flex flex-col md:text-right space-y-0.5">
-                    <span className="text-[10px] uppercase font-semibold text-slate-400">Line Total</span>
-                    <span className="text-xs font-mono font-bold text-emerald-400">
+                    <span className="text-[10px] uppercase font-bold text-on-surface-variant">Line Total</span>
+                    <span className="text-xs font-mono font-bold text-green-700">
                       ₹{lineTotal.toFixed(2)}
                     </span>
                   </div>
@@ -403,7 +403,7 @@ export function InvoiceForm({
                       onClick={() => handleRemoveItem(idx)}
                       disabled={items.length === 1 && !item.productId}
                       aria-label="Remove line item"
-                      className="rounded-lg p-2 text-rose-400 transition-colors hover:bg-rose-500/10 hover:text-rose-300 disabled:opacity-30"
+                      className="rounded-lg p-2 text-error transition-colors hover:bg-error/10 hover:text-error disabled:opacity-30"
                     >
                       <Trash2 size={16} />
                     </button>
@@ -416,40 +416,40 @@ export function InvoiceForm({
       </GlassCard>
 
       {/* Totals Summary Footer */}
-      <GlassCard className="p-5 border-slate-900 bg-slate-950/60 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-3 text-slate-400 text-xs">
+      <GlassCard className="p-5 border-outline-variant bg-surface-container flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-3 text-on-surface-variant text-xs">
           <Calculator size={18} className="text-primary" />
           <span>Calculated automatically based on unit prices and GST slab percentages.</span>
         </div>
 
         <div className="flex flex-col sm:items-end space-y-1 text-sm">
-          <div className="flex justify-between sm:justify-start gap-8 text-xs text-slate-400">
+          <div className="flex justify-between sm:justify-start gap-8 text-xs text-on-surface-variant">
             <span>Subtotal:</span>
-            <span className="font-mono font-semibold text-slate-200">
+            <span className="font-mono font-semibold text-on-surface">
               ₹{totals.subtotal.toFixed(2)}
             </span>
           </div>
-          <div className="flex justify-between sm:justify-start gap-8 text-xs text-slate-400">
+          <div className="flex justify-between sm:justify-start gap-8 text-xs text-on-surface-variant">
             <span>Total GST:</span>
-            <span className="font-mono font-semibold text-slate-200">
+            <span className="font-mono font-semibold text-on-surface">
               ₹{totals.gstTotal.toFixed(2)}
             </span>
           </div>
-          <div className="flex justify-between sm:justify-start gap-8 text-base font-extrabold text-white border-t border-slate-900 pt-1.5 mt-1">
+          <div className="flex justify-between sm:justify-start gap-8 text-base font-extrabold text-on-surface border-t border-outline-variant pt-1.5 mt-1">
             <span>Grand Total:</span>
-            <span className="font-mono text-emerald-400">₹{totals.grandTotal.toFixed(2)}</span>
+            <span className="font-mono text-primary font-extrabold">₹{totals.grandTotal.toFixed(2)}</span>
           </div>
         </div>
       </GlassCard>
 
       {/* Actions */}
-      <div className="flex items-center justify-end space-x-3 border-t border-slate-900/80 pt-4">
+      <div className="flex items-center justify-end space-x-3 border-t border-outline-variant pt-4">
         {onCancel && (
           <button
             type="button"
             onClick={onCancel}
             disabled={isLoading}
-            className="rounded-lg px-4 py-2 text-xs font-semibold text-slate-400 transition-colors hover:bg-slate-900 hover:text-white disabled:opacity-50"
+            className="rounded-lg px-4 py-2 text-xs font-semibold text-on-surface-variant transition-colors hover:bg-surface-container hover:text-on-surface disabled:opacity-50"
           >
             Cancel
           </button>
@@ -457,7 +457,7 @@ export function InvoiceForm({
         <button
           type="submit"
           disabled={isLoading || items.length === 0}
-          className="rounded-lg bg-primary px-6 py-2.5 text-xs font-semibold text-white shadow-md transition-all hover:bg-violet-600 active:scale-95 disabled:opacity-50"
+          className="rounded-lg bg-primary px-6 py-2.5 text-xs font-semibold text-white shadow-md transition-all hover:bg-primary/90 active:scale-95 disabled:opacity-50"
         >
           {isLoading ? 'Generating Invoice...' : initialData?.id ? 'Update Invoice' : 'Create & Issue Invoice'}
         </button>

@@ -112,10 +112,10 @@ export function ProductCatalog() {
       accessorKey: 'name',
       cell: (prod) => (
         <div>
-          <div className="font-bold text-white tracking-wide">{prod.name}</div>
+          <div className="font-bold text-on-surface tracking-wide">{prod.name}</div>
           {prod.description && (
-            <div className="flex items-center text-xs text-slate-400 mt-1 max-w-sm truncate">
-              <HelpCircle size={12} className="mr-1 shrink-0 text-slate-500" />
+            <div className="flex items-center text-xs text-on-surface-variant mt-1 max-w-sm truncate">
+              <HelpCircle size={12} className="mr-1 shrink-0 text-on-surface-variant/60" />
               <span>{prod.description}</span>
             </div>
           )}
@@ -128,11 +128,11 @@ export function ProductCatalog() {
       cell: (prod) =>
         prod.sku ? (
           <div className="flex items-center space-x-1.5">
-            <Layers size={14} className="text-slate-500 shrink-0" />
-            <span className="font-mono text-xs font-semibold text-slate-300">{prod.sku}</span>
+            <Layers size={14} className="text-on-surface-variant/70 shrink-0" />
+            <span className="font-mono text-xs font-semibold text-on-surface">{prod.sku}</span>
           </div>
         ) : (
-          <span className="rounded bg-slate-900 border border-slate-800 px-2 py-0.5 text-xs font-medium text-slate-500">
+          <span className="rounded bg-surface-container border border-outline-variant px-2 py-0.5 text-xs font-medium text-on-surface-variant">
             None
           </span>
         ),
@@ -141,7 +141,7 @@ export function ProductCatalog() {
       header: 'Tax Rate',
       accessorKey: 'gstRate',
       cell: (prod) => (
-        <span className="text-xs bg-indigo-950/40 text-indigo-300 border border-indigo-500/30 px-2 py-1 rounded-md font-semibold tracking-wide">
+        <span className="text-xs bg-primary/10 text-primary border border-primary/20 px-2 py-1 rounded-md font-semibold tracking-wide">
           {parseFloat(prod.gstRate).toFixed(1)}% GST
         </span>
       ),
@@ -150,7 +150,7 @@ export function ProductCatalog() {
       header: 'Unit Price',
       accessorKey: 'price',
       cell: (prod) => (
-        <span className="font-mono font-bold text-white text-sm">
+        <span className="font-mono font-bold text-on-surface text-sm">
           ₹{parseFloat(prod.price).toFixed(2)}
         </span>
       ),
@@ -165,7 +165,7 @@ export function ProductCatalog() {
             onClick={() => handleOpenEdit(prod)}
             disabled={updateMutation.isPending || deleteMutation.isPending}
             aria-label={`Edit ${prod.name}`}
-            className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-900 hover:text-white active:scale-95 disabled:opacity-50"
+            className="rounded-lg p-2 text-on-surface-variant transition-colors hover:bg-surface-container hover:text-on-surface active:scale-95 disabled:opacity-50"
           >
             <Edit3 size={16} />
           </button>
@@ -174,7 +174,7 @@ export function ProductCatalog() {
             onClick={() => handleDeleteProduct(prod)}
             disabled={updateMutation.isPending || deleteMutation.isPending}
             aria-label={`Delete ${prod.name}`}
-            className="rounded-lg p-2 text-rose-400 transition-colors hover:bg-rose-950/40 hover:text-rose-300 active:scale-95 disabled:opacity-50"
+            className="rounded-lg p-2 text-error transition-colors hover:bg-error/10 hover:text-error active:scale-95 disabled:opacity-50"
           >
             <Trash2 size={16} />
           </button>
@@ -190,16 +190,16 @@ export function ProductCatalog() {
         <div>
           <div className="flex items-center gap-2.5">
             <Package className="h-7 w-7 text-primary" />
-            <h1 className="text-3xl font-extrabold tracking-tight text-white">Products</h1>
+            <h1 className="text-3xl font-extrabold tracking-tight text-on-surface">Products</h1>
           </div>
-          <p className="text-muted-foreground text-sm mt-1">
+          <p className="text-on-surface-variant text-sm mt-1">
             Catalog inventory items, services, unit prices, and GST slab rates for invoicing.
           </p>
         </div>
         <button
           type="button"
           onClick={handleOpenCreate}
-          className="flex items-center justify-center space-x-2 bg-primary hover:bg-violet-600 active:scale-95 transition-all text-white font-semibold py-2.5 px-5 rounded-xl text-sm shadow-md shrink-0"
+          className="flex items-center justify-center space-x-2 bg-primary hover:bg-primary/90 active:scale-95 transition-all text-white font-semibold py-2.5 px-5 rounded-xl text-sm shadow-md shrink-0"
         >
           <Plus size={16} />
           <span>Add Product</span>

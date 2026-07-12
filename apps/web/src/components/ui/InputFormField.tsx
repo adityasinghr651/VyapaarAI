@@ -42,16 +42,16 @@ export const InputFormField = React.forwardRef<HTMLInputElement, InputFormFieldP
         {label && (
           <label
             htmlFor={inputId}
-            className="block text-xs font-semibold uppercase tracking-wider text-slate-300"
+            className="block text-xs font-bold uppercase tracking-wider text-on-surface-variant"
           >
             {label}
-            {required && <span className="ml-1 text-rose-400">*</span>}
+            {required && <span className="ml-1 text-error">*</span>}
           </label>
         )}
 
         <div className="relative flex items-center">
           {leftIcon && (
-            <div className="pointer-events-none absolute left-3 flex items-center justify-center text-slate-400">
+            <div className="pointer-events-none absolute left-3 flex items-center justify-center text-on-surface-variant">
               {leftIcon}
             </div>
           )}
@@ -64,12 +64,12 @@ export const InputFormField = React.forwardRef<HTMLInputElement, InputFormFieldP
             aria-describedby={describedByIds}
             className={twMerge(
               clsx(
-                'glass-input w-full rounded-lg p-2.5 text-sm text-white placeholder:text-slate-500 focus:outline-none transition-all',
+                'w-full rounded-lg bg-surface-container-lowest p-2.5 text-sm text-on-surface placeholder:text-on-surface-variant/60 focus:outline-none transition-all',
                 leftIcon && 'pl-10',
                 rightIcon && 'pr-10',
                 error
-                  ? 'border-rose-500/80 focus:border-rose-500 focus:shadow-[0_0_0_2px_rgba(244,63,94,0.2)]'
-                  : 'border-slate-800/80 hover:border-slate-700',
+                  ? 'border border-error focus:border-error focus:ring-2 focus:ring-error/20'
+                  : 'border border-outline-variant hover:border-outline-variant/80 focus:border-primary focus:ring-2 focus:ring-primary/20',
                 className
               )
             )}
@@ -77,18 +77,18 @@ export const InputFormField = React.forwardRef<HTMLInputElement, InputFormFieldP
           />
 
           {rightIcon && (
-            <div className="absolute right-3 flex items-center justify-center text-slate-400">
+            <div className="absolute right-3 flex items-center justify-center text-on-surface-variant">
               {rightIcon}
             </div>
           )}
         </div>
 
         {error ? (
-          <p id={errorId} role="alert" className="text-xs font-medium text-rose-400">
+          <p id={errorId} role="alert" className="text-xs font-semibold text-error">
             {error}
           </p>
         ) : helperText ? (
-          <p id={helperId} className="text-xs text-slate-400">
+          <p id={helperId} className="text-xs text-on-surface-variant">
             {helperText}
           </p>
         ) : null}

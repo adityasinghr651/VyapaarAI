@@ -151,7 +151,7 @@ export function CustomerForm({
       <div className="flex flex-col space-y-1.5">
         <label
           htmlFor="customer-billing-address"
-          className="block text-xs font-semibold uppercase tracking-wider text-slate-300"
+          className="block text-xs font-bold uppercase tracking-wider text-on-surface-variant"
         >
           Billing Address
         </label>
@@ -159,18 +159,18 @@ export function CustomerForm({
           id="customer-billing-address"
           value={address}
           onChange={(e) => setAddress(e.target.value)}
-          className="glass-input h-20 w-full rounded-lg p-2.5 text-sm text-white placeholder:text-slate-500 focus:outline-none transition-all border-slate-800/80 hover:border-slate-700"
+          className="w-full rounded-lg bg-surface-container-lowest border border-outline-variant p-2.5 text-sm text-on-surface placeholder:text-on-surface-variant/60 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all hover:border-outline-variant/80"
           placeholder="123 Industrial Area, Sector 5..."
         />
       </div>
 
-      <div className="flex items-center justify-end space-x-3 border-t border-slate-900/80 pt-4">
+      <div className="flex items-center justify-end space-x-3 border-t border-outline-variant pt-4">
         {onCancel && (
           <button
             type="button"
             onClick={onCancel}
             disabled={isLoading}
-            className="rounded-lg px-4 py-2 text-xs font-semibold text-slate-400 transition-colors hover:bg-slate-900 hover:text-white disabled:opacity-50"
+            className="rounded-lg px-4 py-2 text-xs font-semibold text-on-surface-variant transition-colors hover:bg-surface-container hover:text-on-surface disabled:opacity-50"
           >
             Cancel
           </button>
@@ -178,7 +178,7 @@ export function CustomerForm({
         <button
           type="submit"
           disabled={isLoading}
-          className="rounded-lg bg-primary px-5 py-2 text-xs font-semibold text-white shadow-md transition-all hover:bg-violet-600 active:scale-95 disabled:opacity-50"
+          className="rounded-lg bg-primary px-5 py-2 text-xs font-semibold text-white shadow-md transition-all hover:bg-primary/90 active:scale-95 disabled:opacity-50"
         >
           {isLoading ? 'Saving...' : initialData?.id ? 'Update Customer' : 'Create Customer'}
         </button>

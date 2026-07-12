@@ -36,23 +36,23 @@ const variantConfig: Record<
 > = {
   success: {
     icon: CheckCircle2,
-    border: 'border-emerald-500/30 bg-emerald-950/20',
-    iconColor: 'text-emerald-400',
+    border: 'border-green-500/40 bg-green-50',
+    iconColor: 'text-green-600',
   },
   error: {
     icon: AlertCircle,
-    border: 'border-rose-500/30 bg-rose-950/20',
-    iconColor: 'text-rose-400',
+    border: 'border-error/40 bg-error-container/30',
+    iconColor: 'text-error',
   },
   warning: {
     icon: AlertTriangle,
-    border: 'border-amber-500/30 bg-amber-950/20',
-    iconColor: 'text-amber-400',
+    border: 'border-amber-500/40 bg-amber-50',
+    iconColor: 'text-amber-600',
   },
   info: {
     icon: Info,
-    border: 'border-blue-500/30 bg-blue-950/20',
-    iconColor: 'text-blue-400',
+    border: 'border-primary/40 bg-primary/5',
+    iconColor: 'text-primary',
   },
 };
 
@@ -65,7 +65,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
 
   const toast = useCallback(
     (item: Omit<ToastItem, 'id'>) => {
-      const id = Math.random().toString(36).substring(2, 9);
+      const id = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
       const duration = item.duration ?? 4000;
 
       setToasts((prev) => [...prev, { ...item, id }]);
@@ -75,29 +75,32 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
           dismiss(id);
         }, duration);
       }
-
       return id;
     },
     [dismiss]
   );
 
   const success = useCallback(
-    (title: string, description?: string) => toast({ variant: 'success', title, description }),
+    (title: string, description?: string) =>
+      toast({ variant: 'success', title, description }),
     [toast]
   );
 
   const error = useCallback(
-    (title: string, description?: string) => toast({ variant: 'error', title, description }),
+    (title: string, description?: string) =>
+      toast({ variant: 'error', title, description }),
     [toast]
   );
 
   const warning = useCallback(
-    (title: string, description?: string) => toast({ variant: 'warning', title, description }),
+    (title: string, description?: string) =>
+      toast({ variant: 'warning', title, description }),
     [toast]
   );
 
   const info = useCallback(
-    (title: string, description?: string) => toast({ variant: 'info', title, description }),
+    (title: string, description?: string) =>
+      toast({ variant: 'info', title, description }),
     [toast]
   );
 
@@ -105,8 +108,8 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     <ToastContext.Provider value={{ toast, dismiss, success, error, warning, info }}>
       {children}
       <div
-        aria-live="polite"
-        aria-atomic="true"
+        role="region"
+        aria-label="Notifications"
         className="fixed bottom-4 right-4 z-50 flex max-w-sm flex-col gap-2.5 pointer-events-none p-4 w-full"
       >
         {toasts.map((t) => {
@@ -121,23 +124,23 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
               aria-live={isError ? 'assertive' : 'polite'}
               className={twMerge(
                 clsx(
-                  'pointer-events-auto flex w-full items-start gap-3 rounded-xl border bg-slate-950/90 p-4 shadow-2xl backdrop-blur-md transition-all animate-in slide-in-from-right duration-300',
+                  'pointer-events-auto flex w-full items-start gap-3 rounded-xl border bg-surface-container-lowest p-4 shadow-lg transition-all animate-in slide-in-from-right duration-300',
                   config.border
                 )
               )}
             >
               <Icon size={18} className={clsx('mt-0.5 shrink-0', config.iconColor)} />
               <div className="flex-1 space-y-1">
-                <p className="text-xs font-semibold text-white leading-tight">{t.title}</p>
+                <p className="text-xs font-bold text-on-surface leading-tight">{t.title}</p>
                 {t.description && (
-                  <p className="text-[11px] text-slate-300 leading-relaxed">{t.description}</p>
+                  <p className="text-[11px] text-on-surface-variant leading-relaxed">{t.description}</p>
                 )}
               </div>
               <button
                 type="button"
                 onClick={() => dismiss(t.id)}
                 aria-label="Close notification"
-                className="rounded-lg p-1 text-slate-400 transition-colors hover:bg-slate-900 hover:text-white shrink-0"
+                className="rounded-lg p-1 text-on-surface-variant transition-colors hover:bg-surface-container-low hover:text-on-surface shrink-0"
               >
                 <X size={14} />
               </button>

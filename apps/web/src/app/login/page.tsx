@@ -1,14 +1,30 @@
+/* eslint-disable @next/next/no-page-custom-font */
 import React from 'react';
-import { LoginForm } from '../../features/auth/components/LoginForm';
+import { LoginLeftPanel } from '../../components/auth/LoginLeftPanel';
+import { StitchLoginForm } from '../../components/auth/StitchLoginForm';
 
 export default function LoginPage() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-950 px-4 relative overflow-hidden">
-      {/* Glow Effects */}
-      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-violet-600/10 rounded-full filter blur-3xl"></div>
-      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-indigo-600/10 rounded-full filter blur-3xl"></div>
-      
-      <LoginForm />
+    <div className="bg-[#f7f9fb] min-h-screen font-body-md text-on-surface antialiased flex flex-col">
+      {/* Google Material Symbols Outlined stylesheet for exact icon rendering */}
+      <link
+        rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+      />
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
+            .halo-focus:focus-within {
+              border-color: #004ac6 !important;
+              box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1) !important;
+            }
+          `,
+        }}
+      />
+      <main className="flex-1 flex flex-col md:flex-row min-h-screen w-full">
+        <LoginLeftPanel />
+        <StitchLoginForm />
+      </main>
     </div>
   );
 }

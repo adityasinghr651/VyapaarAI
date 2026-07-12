@@ -47,10 +47,27 @@ export class ApprovalsService {
     });
   }
 
-  async findAll(tenantId: string, status?: ApprovalStatus) {
+  async findAll(tenantId: string, status?: string | ApprovalStatus) {
     await this.expirePending(tenantId);
+    let statusFilter: Prisma.EnumApprovalStatusFilter | ApprovalStatus | undefined;
+    if (status) {
+      if (typeof status === 'string' && status.includes(',')) {
+        const statuses = status
+          .split(',')
+          .map((s) => s.trim() as ApprovalStatus)
+          .filter((s) => Object.values(ApprovalStatus).includes(s));
+        if (statuses.length > 0) {
+          statusFilter = { in: statuses };
+        }
+      } else {
+        const s = typeof status === 'string' ? status.trim() : status;
+        if (Object.values(ApprovalStatus).includes(s as ApprovalStatus)) {
+          statusFilter = s as ApprovalStatus;
+        }
+      }
+    }
     return this.prisma.pendingApproval.findMany({
-      where: { tenantId, status },
+      where: { tenantId, status: statusFilter },
       include: {
         requestedBy: { select: { id: true, name: true, email: true } },
         decidedBy: { select: { id: true, name: true, email: true } },

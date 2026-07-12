@@ -112,10 +112,10 @@ export function CustomerManager() {
       accessorKey: 'name',
       cell: (cust) => (
         <div>
-          <div className="font-bold text-white tracking-wide">{cust.name}</div>
+          <div className="font-bold text-on-surface tracking-wide">{cust.name}</div>
           {cust.address && (
-            <div className="flex items-center text-xs text-slate-400 mt-1 max-w-xs truncate">
-              <MapPin size={12} className="mr-1 shrink-0 text-slate-500" />
+            <div className="flex items-center text-xs text-on-surface-variant mt-1 max-w-xs truncate">
+              <MapPin size={12} className="mr-1 shrink-0 text-on-surface-variant/60" />
               <span>{cust.address}</span>
             </div>
           )}
@@ -127,12 +127,12 @@ export function CustomerManager() {
       accessorKey: 'gstin',
       cell: (cust) =>
         cust.gstin ? (
-          <div className="flex items-center space-x-1.5 rounded-md bg-emerald-950/40 border border-emerald-500/30 px-2.5 py-1 w-fit">
-            <FileCheck size={14} className="text-emerald-400 shrink-0" />
-            <span className="font-mono text-xs font-semibold text-emerald-300">{cust.gstin}</span>
+          <div className="flex items-center space-x-1.5 rounded-md bg-green-50 border border-green-200 px-2.5 py-1 w-fit">
+            <FileCheck size={14} className="text-green-600 shrink-0" />
+            <span className="font-mono text-xs font-semibold text-green-700">{cust.gstin}</span>
           </div>
         ) : (
-          <span className="rounded bg-slate-900 border border-slate-800 px-2 py-0.5 text-xs font-medium text-slate-500">
+          <span className="rounded bg-surface-container border border-outline-variant px-2 py-0.5 text-xs font-medium text-on-surface-variant">
             Unregistered
           </span>
         ),
@@ -141,21 +141,21 @@ export function CustomerManager() {
       header: 'Contact Info',
       accessorKey: 'email',
       cell: (cust) => (
-        <div className="space-y-1 text-xs text-slate-300">
+        <div className="space-y-1 text-xs text-on-surface">
           {cust.email && (
             <div className="flex items-center">
-              <Mail size={12} className="mr-1.5 text-slate-500 shrink-0" />
+              <Mail size={12} className="mr-1.5 text-on-surface-variant/70 shrink-0" />
               <span className="truncate max-w-[180px]">{cust.email}</span>
             </div>
           )}
           {cust.phone && (
             <div className="flex items-center">
-              <Phone size={12} className="mr-1.5 text-slate-500 shrink-0" />
+              <Phone size={12} className="mr-1.5 text-on-surface-variant/70 shrink-0" />
               <span className="font-mono">{cust.phone}</span>
             </div>
           )}
           {!cust.email && !cust.phone && (
-            <span className="text-slate-600 italic">No contact details</span>
+            <span className="text-on-surface-variant/50 italic">No contact details</span>
           )}
         </div>
       ),
@@ -170,7 +170,7 @@ export function CustomerManager() {
             onClick={() => handleOpenEdit(cust)}
             disabled={updateMutation.isPending || deleteMutation.isPending}
             aria-label={`Edit ${cust.name}`}
-            className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-900 hover:text-white active:scale-95 disabled:opacity-50"
+            className="rounded-lg p-2 text-on-surface-variant transition-colors hover:bg-surface-container hover:text-on-surface active:scale-95 disabled:opacity-50"
           >
             <Edit3 size={16} />
           </button>
@@ -179,7 +179,7 @@ export function CustomerManager() {
             onClick={() => handleDeleteCustomer(cust)}
             disabled={updateMutation.isPending || deleteMutation.isPending}
             aria-label={`Delete ${cust.name}`}
-            className="rounded-lg p-2 text-rose-400 transition-colors hover:bg-rose-950/40 hover:text-rose-300 active:scale-95 disabled:opacity-50"
+            className="rounded-lg p-2 text-error transition-colors hover:bg-error/10 hover:text-error active:scale-95 disabled:opacity-50"
           >
             <Trash2 size={16} />
           </button>
@@ -195,9 +195,9 @@ export function CustomerManager() {
         <div>
           <div className="flex items-center gap-2.5">
             <Users className="h-7 w-7 text-primary" />
-            <h1 className="text-3xl font-extrabold tracking-tight text-white">Customers</h1>
+            <h1 className="text-3xl font-extrabold tracking-tight text-on-surface">Customers</h1>
           </div>
-          <p className="text-muted-foreground text-sm mt-1">
+          <p className="text-on-surface-variant text-sm mt-1">
             Register, manage, and audit your SMB customer profiles and GSTIN records.
           </p>
         </div>
